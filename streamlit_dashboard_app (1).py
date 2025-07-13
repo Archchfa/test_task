@@ -228,8 +228,8 @@ fig7 = px.bar(orders_by_country_year,
 st.plotly_chart(fig7)
 
 
-# Дополнение: График 8 - Темпы роста прибыли по странам (Таблица)
-st.subheader("Темпы роста прибыли по странам")
+# Дополнение: График 8 - Таблица роста прибыли по странам
+st.subheader("Таблица роста прибыли по странам")
 
 # Группируем данные по странам и годам, рассчитывая прибыль
 profit_by_country_year = fact_with_full_info.groupby(['country', 'year'])['netsalesamount'].sum().reset_index()
