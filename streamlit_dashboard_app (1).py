@@ -44,7 +44,10 @@ profit_by_customer = profit_by_customer.sort_values(by='netsalesamount', ascendi
 top_10_customers = profit_by_customer.head(10)
 
 # Заголовок страницы
-st.title("Топ-10 прибыльных заказчиков (Женская обувь, США)")
+st.title("Тестовое задание")
+
+# Подзаголовок
+st.subheader("Какие заказчики наиболее прибыльны в товарной категории «женская обувь» в США?")
 
 # Размещаем два графика в строку
 col1, col2 = st.columns(2)
