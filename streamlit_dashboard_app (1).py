@@ -22,39 +22,47 @@ fact_with_category = pd.merge(fact_with_calendar, products[['productid', 'catego
 # Объединяем fact_with_category с таблицей cont для добавления информации о магазинах
 fact_with_full_info = pd.merge(fact_with_category, cont[['name', 'country']], on='name', how='left')
 
-# Добавляем год в данные
-fact_with_full_info['year'] = pd.to_datetime(fact_with_full_info['orderdate']).dt.year
+# Фильтруем данные по категории "Женская обувь" и стране "Соединённые Штаты Америки" (для 1 и 2 графиков)
+filtered_data_us = fact_with_full_info[
+    (fact_with_full_info['categoryname'] == 'Женская обувь') & 
+    (fact_with_full_info['country'] == 'Соединённые Штаты Америки')
+]
 
-# Фильтруем данные для 2018 и 2019 годов
-filtered_data_2018_2019 = fact_with_full_info[(fact_with_full_info['year'] == 2018) | (fact_with_full_info['year'] == 2019)]
+# Агрегируем прибыль по заказчикам для США
+profit_by_customer_us = filtered_data_us.groupby('name')['netsalesamount'].sum().reset_index()
 
-# Группируем данные по заказчикам (name) и годам
-profit_by_customer_year = filtered_data_2018_2019.groupby(['name', 'year'])['grosssalesamount'].sum().reset_index()
+# Сумма всей прибыли в выбранной категории и стране для США
+total_profit_us = profit_by_customer_us['netsalesamount'].sum()
 
-# Поворот данных для сравнения 2019 и 2018 годов
-profit_by_customer_year_pivot = profit_by_customer_year.pivot(index='name', columns='year', values='grosssalesamount')
+# Рассчитываем процент прибыли для каждого магазина для США
+profit_by_customer_us['profit_percentage'] = (profit_by_customer_us['netsalesamount'] / total_profit_us) * 100
 
-# Фильтруем заказчиков, у которых значение grosssalesamount в 2019 году больше, чем в 2018 году
-profit_by_customer_year_pivot = profit_by_customer_year_pivot[profit_by_customer_year_pivot[2019] > profit_by_customer_year_pivot[2018]]
+# Сортируем по прибыли (чистая прибыль) для США
+profit_by_customer_us = profit_by_customer_us.sort_values(by='netsalesamount', ascending=False)
 
-# Рассчитываем прирост с 2018 по 2019 год для каждого заказчика
-profit_by_customer_year_pivot['growth_percentage'] = ((profit_by_customer_year_pivot[2019] - profit_by_customer_year_pivot[2018]) / profit_by_customer_year_pivot[2018]) * 100
 
-# Создаем таблицу с приростом
-growth_table = profit_by_customer_year_pivot[['growth_percentage']].reset_index()
+# Для 3, 4 и 5 графиков: фильтруем данные для Бразилии (все магазины из Бразилии)
+filtered_data_br = fact_with_full_info[
+    (fact_with_full_info['country'] == 'Бразилия')
+]
 
-# Строим круговую диаграмму с приростом
-fig_growth = px.pie(growth_table, 
-                    names='name', 
-                    values='growth_percentage', 
-                    title="Прирост прибыли с 2018 по 2019 год для каждого заказчика", 
-                    labels={'growth_percentage': 'Прирост (%)', 'name': 'Заказчик'})
+# Агрегируем прибыль по заказчикам для Бразилии
+profit_by_customer_br = filtered_data_br.groupby('name')['netsalesamount'].sum().reset_index()
 
-# Отображаем круговую диаграмму
-st.plotly_chart(fig_growth)
+# Сумма всей прибыли в выбранной категории и стране для Бразилии
+total_profit_br = profit_by_customer_br['netsalesamount'].sum()
 
-# Отображаем таблицу прироста
-st.write(growth_table)
+# Рассчитываем процент прибыли для каждого магазина для Бразилии
+profit_by_customer_br['profit_percentage'] = (profit_by_customer_br['netsalesamount'] / total_profit_br) * 100
+
+# Сортируем по прибыли (чистая прибыль) для Бразилии
+profit_by_customer_br = profit_by_customer_br.sort_values(by='netsalesamount', ascending=False)
+
+# Кумулятивная прибыль для Бразилии
+profit_by_customer_br['cumulative_profit'] = profit_by_customer_br['netsalesamount'].cumsum()
+
+# Кумулятивный процент для Бразилии
+profit_by_customer_br['cumulative_percent'] = (profit_by_customer_br['cumulative_profit'] / total_profit_br) * 100
 
 
 # Заголовок страницы
