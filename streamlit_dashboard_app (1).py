@@ -31,6 +31,12 @@ filtered_data = fact_with_full_info[
 # Агрегируем прибыль по заказчикам
 profit_by_customer = filtered_data.groupby('name')['netsalesamount'].sum().reset_index()
 
+# Сумма всей прибыли в выбранной категории и стране
+total_profit = profit_by_customer['netsalesamount'].sum()
+
+# Рассчитываем процент прибыли для каждого магазина
+profit_by_customer['profit_percentage'] = (profit_by_customer['netsalesamount'] / total_profit) * 100
+
 # Сортируем по прибыли (чистая прибыль)
 profit_by_customer = profit_by_customer.sort_values(by='netsalesamount', ascending=False)
 
@@ -40,19 +46,42 @@ top_10_customers = profit_by_customer.head(10)
 # Заголовок страницы
 st.title("Топ-10 прибыльных заказчиков (Женская обувь, США)")
 
-# График: Топ-10 прибыльных заказчиков
-st.subheader("Топ-10 прибыльных заказчиков")
-fig1 = px.bar(top_10_customers, 
-              x='name', 
-              y='netsalesamount', 
-              orientation='v',  # Вертикальная ориентация (по оси X магазины)
-              title="Топ-10 прибыльных заказчиков",
-              labels={'netsalesamount': 'Чистая прибыль', 'name': 'Заказчик'},
-              color='netsalesamount',
-              color_continuous_scale='Blues')
+# Размещаем два графика в строку
+col1, col2 = st.columns(2)
 
-# Поворот оси X, чтобы названия магазинов не накладывались
-fig1.update_xaxes(tickangle=45)
+# График 1: Топ-10 прибыльных заказчиков
+with col1:
+    st.subheader("Топ-10 прибыльных заказчиков")
+    fig1 = px.bar(top_10_customers, 
+                  x='name', 
+                  y='netsalesamount', 
+                  orientation='v',  # Вертикальная ориентация (по оси X магазины)
+                  title="Топ-10 прибыльных заказчиков",
+                  labels={'netsalesamount': 'Чистая прибыль', 'name': 'Заказчик'},
+                  color='netsalesamount')  # Убрали тепловую карту
 
-# Отображение графика
-st.plotly_chart(fig1)
+    # Растягиваем график на весь экран
+    fig1.update_layout(
+        autosize=True,
+        width=700,  # увеличиваем ширину
+        height=500,  # увеличиваем высоту
+        margin=dict(l=0, r=0, t=30, b=0)  # уменьшаем поля для увеличения области графика
+    )
+
+    # Поворот оси X, чтобы названия магазинов не накладывались
+    fig1.update_xaxes(tickangle=45)
+
+    # Отображение графика
+    st.plotly_chart(fig1)
+
+# График 2: Круговая диаграмма с процентом прибыли каждого магазина
+with col2:
+    st.subheader("Процент прибыли каждого магазина")
+    fig2 = px.pie(profit_by_customer, 
+                  names='name', 
+                  values='profit_percentage',  # Используем процент прибыли
+                  title="Процент прибыли каждого магазина",
+                  labels={'profit_percentage': 'Процент прибыли', 'name': 'Заказчик'})
+    
+    # Отображение графика
+    st.plotly_chart(fig2)
