@@ -220,6 +220,9 @@ st.subheader("Количество заказов по странам и год�
 # Группируем данные по странам и годам, считая количество заказов
 orders_by_country_year = fact_with_full_info.groupby(['country', 'year'])['orderid'].nunique().reset_index()
 
+# Исключаем 2020 год
+orders_by_country_year = orders_by_country_year[orders_by_country_year['year'] != 2020]
+
 # Столбчатая диаграмма
 fig7 = px.bar(orders_by_country_year, 
               x='year', 
