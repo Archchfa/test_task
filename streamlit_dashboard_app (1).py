@@ -22,7 +22,7 @@ fact_with_category = pd.merge(fact_with_calendar, products[['productid', 'catego
 # Объединяем fact_with_category с таблицей cont для добавления информации о магазинах
 fact_with_full_info = pd.merge(fact_with_category, cont[['name', 'country']], on='name', how='left')
 
-# Фильтруем данные для США
+# Фильтруем данные по категории "Женская обувь" и стране "Соединённые Штаты Америки" (для 1 и 2 графиков)
 filtered_data_us = fact_with_full_info[
     (fact_with_full_info['categoryname'] == 'Женская обувь') & 
     (fact_with_full_info['country'] == 'Соединённые Штаты Америки')
@@ -41,9 +41,8 @@ profit_by_customer_us['profit_percentage'] = (profit_by_customer_us['netsalesamo
 profit_by_customer_us = profit_by_customer_us.sort_values(by='netsalesamount', ascending=False)
 
 
-# Фильтруем данные для Бразилии
+# Для 3, 4 и 5 графиков: фильтруем данные для Бразилии (все магазины из Бразилии)
 filtered_data_br = fact_with_full_info[
-    (fact_with_full_info['categoryname'] == 'Женская обувь') & 
     (fact_with_full_info['country'] == 'Бразилия')
 ]
 
