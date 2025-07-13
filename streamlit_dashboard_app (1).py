@@ -82,7 +82,7 @@ with col1:
                   y='netsalesamount', 
                   orientation='v',  # Вертикальная ориентация (по оси X магазины)
                   title="Наиболее прибыльные магазины (США)",
-                  labels={'netsalesamount': 'Чистая прибыль', 'name': 'Заказчик'})
+                  labels={'netsalesamount': 'Чистая прибыль', 'name': 'Заказчик'})  
 
 
     # Растягиваем график на весь экран
@@ -127,7 +127,7 @@ with col3:
                    title="Кумулятивная прибыль заказчиков (Бразилия)",
                    labels={'cumulative_percent': 'Кумулятивный процент прибыли', 'name': 'Заказчик'},
                    markers=True)  # Добавляем маркеры (точки)
-    
+
     # Растягиваем график на весь экран
     fig3.update_layout(
         autosize=True,
@@ -135,23 +135,32 @@ with col3:
         height=500,
         margin=dict(l=0, r=0, t=30, b=0)
     )
-    
+
     fig3.update_xaxes(tickangle=45)
-    
+
     # Отображаем график
     st.plotly_chart(fig3)
 
-# График 4: Диаграмма рассеяния (scatter plot) для Бразилии
+# График 4: Столбчатая диаграмма с прибыльностью по заказчикам для Бразилии
 with col4:
-    st.subheader("Диаграмма рассеяния: Прибыль по заказчикам (Бразилия)")
-    fig4 = px.scatter(profit_by_customer_br, 
-                      x='name', 
-                      y='netsalesamount', 
-                      title="Прибыль по заказчикам (Бразилия)",
-                      labels={'netsalesamount': 'Чистая прибыль', 'name': 'Заказчик'})
+    st.subheader("Прибыль по заказчикам (Бразилия)")
+    fig4 = px.bar(profit_by_customer_br, 
+                  x='name', 
+                  y='netsalesamount', 
+                  title="Прибыль по заказчикам (Бразилия)",
+                  labels={'netsalesamount': 'Чистая прибыль', 'name': 'Заказчик'})
 
+    # Растягиваем график на весь экран
+    fig4.update_layout(
+        autosize=True,
+        width=700,
+        height=500,
+        margin=dict(l=0, r=0, t=30, b=0)
+    )
 
-    # Отображение графика
+    fig4.update_xaxes(tickangle=45)
+
+    # Отображаем график
     st.plotly_chart(fig4)
 
 # График 5: Круговая диаграмма с процентом прибыли каждого магазина для Бразилии
@@ -162,6 +171,6 @@ with col5:
                   values='profit_percentage',  # Используем процент прибыли
                   title="Процент прибыли каждого магазина (Бразилия)",
                   labels={'profit_percentage': 'Процент прибыли', 'name': 'Заказчик'})
-    
+
     # Отображение графика
     st.plotly_chart(fig5)
