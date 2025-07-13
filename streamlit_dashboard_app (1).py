@@ -40,7 +40,6 @@ profit_by_customer_us['profit_percentage'] = (profit_by_customer_us['netsalesamo
 # Сортируем по прибыли (чистая прибыль) для США
 profit_by_customer_us = profit_by_customer_us.sort_values(by='netsalesamount', ascending=False)
 
-
 # Для 3, 4 и 5 графиков: фильтруем данные для Бразилии (все магазины из Бразилии)
 filtered_data_br = fact_with_full_info[
     (fact_with_full_info['country'] == 'Бразилия')
@@ -82,7 +81,7 @@ with col1:
                   y='netsalesamount', 
                   orientation='v',  # Вертикальная ориентация (по оси X магазины)
                   title="Наиболее прибыльные магазины (США)",
-                  labels={'netsalesamount': 'Чистая прибыль', 'name': 'Заказчик'})  
+                  labels={'netsalesamount': 'Чистая прибыль', 'name': 'Заказчик'})    
 
 
     # Растягиваем график на весь экран
@@ -177,3 +176,42 @@ with col5:
 
     # Отображение графика
     st.plotly_chart(fig5)
+
+# Дополнение: График 6 - Темпы роста прибыли по странам (Линейный график)
+st.subheader("Темпы роста прибыли по странам")
+profit_by_country = fact_with_full_info.groupby('country')['netsalesamount'].sum().reset_index()
+profit_by_country['growth_percentage'] = profit_by_country['netsalesamount'].pct_change() * 100
+
+fig6 = px.line(profit_by_country, 
+               x='country', 
+               y='growth_percentage', 
+               title="Темпы роста прибыли по странам",
+               labels={'growth_percentage': 'Темпы роста прибыли (%)', 'country': 'Страна'})
+fig6.update_layout(
+    autosize=True,
+    width=700,
+    height=500,
+    margin=dict(l=0, r=0, t=30, b=0)
+)
+
+st.plotly_chart(fig6)
+
+# Дополнение: График 7 - Доля прибыли по странам (Круговая диаграмма)
+st.subheader("Доля прибыли по странам")
+fig7 = px.pie(profit_by_country, 
+              names='country', 
+              values='netsalesamount', 
+              title="Доля прибыли по странам",
+              labels={'netsalesamount': 'Прибыль', 'country': 'Страна'})
+
+st.plotly_chart(fig7)
+
+# Дополнение: График 8 - Темпы роста прибыли по странам (Столбчатая диаграмма)
+st.subheader("Темпы роста прибыли по странам (Столбчатая диаграмма)")
+fig8 = px.bar(profit_by_country, 
+              x='country', 
+              y='growth_percentage', 
+              title="Темпы роста прибыли по странам (Столбчатая диаграмма)",
+              labels={'growth_percentage': 'Темпы роста прибыли (%)', 'country': 'Страна'})
+
+st.plotly_chart(fig8)
