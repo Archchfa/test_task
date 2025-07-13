@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -20,7 +19,7 @@ cont = pd.read_excel(cont_url)
 # Объединяем fact_with_calendar с products для добавления категории
 fact_with_category = pd.merge(fact_with_calendar, products[['productid', 'categoryname']], on='productid', how='left')
 
-# Объединяем fact_with_category с таблицей cont для добавления информации о стране
+# Объединяем fact_with_category с таблицей cont для добавления информации о магазинах
 fact_with_full_info = pd.merge(fact_with_category, cont[['name', 'country']], on='name', how='left')
 
 # Фильтруем данные по категории "Женская обувь" и стране "Соединённые Штаты Америки"
@@ -39,55 +38,21 @@ profit_by_customer = profit_by_customer.sort_values(by='netsalesamount', ascendi
 top_10_customers = profit_by_customer.head(10)
 
 # Заголовок страницы
-st.title("Анализ прибыльных заказчиков (Женская обувь, США)")
+st.title("Топ-10 прибыльных заказчиков (Женская обувь, США)")
 
-# График 1: Топ-10 прибыльных заказчиков
+# График: Топ-10 прибыльных заказчиков
 st.subheader("Топ-10 прибыльных заказчиков")
 fig1 = px.bar(top_10_customers, 
-              x='netsalesamount', 
-              y='name', 
-              orientation='h', 
+              x='name', 
+              y='netsalesamount', 
+              orientation='v',  # Вертикальная ориентация (по оси X магазины)
               title="Топ-10 прибыльных заказчиков",
               labels={'netsalesamount': 'Чистая прибыль', 'name': 'Заказчик'},
               color='netsalesamount',
               color_continuous_scale='Blues')
+
+# Поворот оси X, чтобы названия магазинов не накладывались
+fig1.update_xaxes(tickangle=45)
+
+# Отображение графика
 st.plotly_chart(fig1)
-
-# График 2: Распределение прибыли по всем заказчикам
-st.subheader("Распределение прибыли среди заказчиков")
-fig2 = px.histogram(profit_by_customer, 
-                    x='netsalesamount', 
-                    nbins=30, 
-                    title='Распределение чистой прибыли среди заказчиков',
-                    labels={'netsalesamount': 'Чистая прибыль'})
-st.plotly_chart(fig2)
-
-# Группировка по месяцам и топ-5 заказчиков
-top_5_customers = profit_by_customer.head(5)['name']
-filtered_top_5 = filtered_data[filtered_data['name'].isin(top_5_customers)]
-filtered_top_5['order_month'] = pd.to_datetime(filtered_top_5['orderdate']).dt.to_period('M')
-monthly_profit = filtered_top_5.groupby(['order_month', 'name'])['netsalesamount'].sum().reset_index()
-
-# График 3: Прибыль по месяцам для топ-5 заказчиков
-st.subheader("Прибыль по месяцам для топ-5 заказчиков")
-fig3 = px.line(monthly_profit, 
-               x='order_month', 
-               y='netsalesamount', 
-               color='name', 
-               markers=True, 
-               title='Прибыль по месяцам для топ-5 заказчиков',
-               labels={'order_month': 'Месяц', 'netsalesamount': 'Чистая прибыль'})
-fig3.update_xaxes(tickformat="%Y-%m")
-st.plotly_chart(fig3)
-
-# График 4: Сумма продаж по месяцам для топ-5 заказчиков
-st.subheader("Сумма продаж по месяцам для топ-5 заказчиков")
-fig4 = px.line(monthly_profit, 
-               x='order_month', 
-               y='netsalesamount', 
-               color='name', 
-               markers=True, 
-               title='Сумма продаж по месяцам для топ-5 заказчиков',
-               labels={'order_month': 'Месяц', 'netsalesamount': 'Сумма продаж'})
-fig4.update_xaxes(tickformat="%Y-%m")
-st.plotly_chart(fig4)
