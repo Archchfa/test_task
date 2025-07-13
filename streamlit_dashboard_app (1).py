@@ -178,11 +178,14 @@ with col5:
     st.plotly_chart(fig5)
 
 
-# Дополнение: График 6 - Сумма прибыли для каждой страны по годам (Линейный график)
+# Дополнение: График 6 - Сумма прибыли для каждой страны по годам (по grosssalesamount)
 st.subheader("Сумма прибыли для каждой страны по годам (по grosssalesamount)")
 
 # Добавляем год в данные
 fact_with_full_info['year'] = pd.to_datetime(fact_with_full_info['orderdate']).dt.year
+
+# Исключаем 2020 год
+fact_with_full_info = fact_with_full_info[fact_with_full_info['year'] != 2020]
 
 # Группируем данные по странам и годам с использованием grosssalesamount
 profit_by_country_year = fact_with_full_info.groupby(['country', 'year'])['grosssalesamount'].sum().reset_index()
