@@ -22,7 +22,7 @@ fact_with_category = pd.merge(fact_with_calendar, products[['productid', 'catego
 # Объединяем fact_with_category с таблицей cont для добавления информации о магазинах
 fact_with_full_info = pd.merge(fact_with_category, cont[['name', 'country']], on='name', how='left')
 
-# Фильтруем данные по категории "Женская обувь" и стране "Соединённые Штаты Америки"
+# Фильтруем данные по категории "Женская обувь" и стране "Бразилия"
 filtered_data = fact_with_full_info[
     (fact_with_full_info['categoryname'] == 'Женская обувь') & 
     (fact_with_full_info['country'] == 'Бразилия')
