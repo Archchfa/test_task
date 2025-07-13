@@ -226,20 +226,3 @@ fig7 = px.bar(orders_by_country_year,
               labels={'orderid': 'Количество заказов', 'year': 'Год', 'country': 'Страна'})
 
 st.plotly_chart(fig7)
-
-
-# Дополнение: График 8 - Таблица роста прибыли по странам
-st.subheader("Таблица роста прибыли по странам")
-
-# Группируем данные по странам и годам, рассчитывая прибыль
-profit_by_country_year = fact_with_full_info.groupby(['country', 'year'])['netsalesamount'].sum().reset_index()
-
-# Рассчитываем процентное изменение прибыли для каждой страны
-profit_by_country_year['profit_growth_pct'] = profit_by_country_year.groupby('country')['netsalesamount'].pct_change() * 100
-
-# Создание таблицы для отображения
-profit_growth_table = profit_by_country_year[['country', 'year', 'profit_growth_pct']]
-profit_growth_table = profit_growth_table.fillna(0)
-
-# Отображаем таблицу
-st.write(profit_growth_table)
