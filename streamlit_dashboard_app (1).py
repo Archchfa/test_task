@@ -22,25 +22,6 @@ fact_with_category = pd.merge(fact_with_calendar, products[['productid', 'catego
 # Объединяем fact_with_category с таблицей cont для добавления информации о магазинах
 fact_with_full_info = pd.merge(fact_with_category, cont[['name', 'country']], on='name', how='left')
 
-# Фильтруем данные по категории "Женская обувь" и стране "Соединённые Штаты Америки"
-filtered_data_us = fact_with_full_info[
-    (fact_with_full_info['categoryname'] == 'Женская обувь') & 
-    (fact_with_full_info['country'] == 'Соединённые Штаты Америки')
-]
-
-# Агрегируем прибыль по заказчикам для США
-profit_by_customer_us = filtered_data_us.groupby('name')['netsalesamount'].sum().reset_index()
-
-# Сумма всей прибыли в выбранной категории и стране для США
-total_profit_us = profit_by_customer_us['netsalesamount'].sum()
-
-# Рассчитываем процент прибыли для каждого магазина для США
-profit_by_customer_us['profit_percentage'] = (profit_by_customer_us['netsalesamount'] / total_profit_us) * 100
-
-# Сортируем по прибыли (чистая прибыль) для США
-profit_by_customer_us = profit_by_customer_us.sort_values(by='netsalesamount', ascending=False)
-
-
 # Фильтруем данные для Бразилии
 filtered_data_br = fact_with_full_info[
     (fact_with_full_info['categoryname'] == 'Женская обувь') & 
@@ -59,13 +40,6 @@ profit_by_customer_br['profit_percentage'] = (profit_by_customer_br['netsalesamo
 # Сортируем по прибыли (чистая прибыль) для Бразилии
 profit_by_customer_br = profit_by_customer_br.sort_values(by='netsalesamount', ascending=False)
 
-# Кумулятивная прибыль для Бразилии
-profit_by_customer_br['cumulative_profit'] = profit_by_customer_br['netsalesamount'].cumsum()
-
-# Кумулятивный процент для Бразилии
-profit_by_customer_br['cumulative_percent'] = (profit_by_customer_br['cumulative_profit'] / total_profit_br) * 100
-
-
 # Заголовок страницы
 st.title("Тестовое задание")
 
@@ -78,7 +52,7 @@ col1, col2 = st.columns(2)
 # График 1: Наиболее прибыльные магазины для США
 with col1:
     st.subheader("Наиболее прибыльные магазины")
-    fig1 = px.bar(profit_by_customer_us, 
+    fig1 = px.bar(profit_by_customer_br, 
                   x='name', 
                   y='netsalesamount', 
                   orientation='v',  # Вертикальная ориентация (по оси X магазины)
@@ -102,7 +76,7 @@ with col1:
 # График 2: Круговая диаграмма с процентом прибыли каждого магазина для США
 with col2:
     st.subheader("Процент прибыли каждого магазина (США)")
-    fig2 = px.pie(profit_by_customer_us, 
+    fig2 = px.pie(profit_by_customer_br, 
                   names='name', 
                   values='profit_percentage',  # Используем процент прибыли
                   title="Процент прибыли каждого магазина (США)",
@@ -153,27 +127,14 @@ with col4:
     # Отображение графика
     st.plotly_chart(fig4)
 
-# График 5: Бар-график с отсечением 20% заказчиков для Бразилии
+# График 5: Круговая диаграмма с процентом прибыли каждого магазина для Бразилии
 with col5:
-    st.subheader("20% заказчиков приносят 80% прибыли (Бразилия)")
-    # Выбираем 20% заказчиков, которые составляют 80% прибыли
-    top_20_percent_customers = profit_by_customer_br[profit_by_customer_br['cumulative_percent'] <= 80]
-    
-    fig5 = px.bar(top_20_percent_customers, 
-                  x='name', 
-                  y='netsalesamount', 
-                  title="20% заказчиков, которые приносят 80% прибыли (Бразилия)",
-                  labels={'netsalesamount': 'Чистая прибыль', 'name': 'Заказчик'})
-    
-    # Растягиваем график на весь экран
-    fig5.update_layout(
-        autosize=True,
-        width=700,
-        height=500,
-        margin=dict(l=0, r=0, t=30, b=0)
-    )
-    
-    fig5.update_xaxes(tickangle=45)
+    st.subheader("Процент прибыли каждого магазина (Бразилия)")
+    fig5 = px.pie(profit_by_customer_br, 
+                  names='name', 
+                  values='profit_percentage',  # Используем процент прибыли
+                  title="Процент прибыли каждого магазина (Бразилия)",
+                  labels={'profit_percentage': 'Процент прибыли', 'name': 'Заказчик'})
     
     # Отображение графика
     st.plotly_chart(fig5)
