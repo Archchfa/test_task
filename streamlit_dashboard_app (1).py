@@ -22,47 +22,67 @@ fact_with_category = pd.merge(fact_with_calendar, products[['productid', 'catego
 # Объединяем fact_with_category с таблицей cont для добавления информации о магазинах
 fact_with_full_info = pd.merge(fact_with_category, cont[['name', 'country']], on='name', how='left')
 
-# Фильтруем данные по категории "Женская обувь" и стране "Бразилия"
-filtered_data = fact_with_full_info[
+# Фильтруем данные по категории "Женская обувь" и стране "Соединённые Штаты Америки"
+filtered_data_us = fact_with_full_info[
+    (fact_with_full_info['categoryname'] == 'Женская обувь') & 
+    (fact_with_full_info['country'] == 'Соединённые Штаты Америки')
+]
+
+# Агрегируем прибыль по заказчикам для США
+profit_by_customer_us = filtered_data_us.groupby('name')['netsalesamount'].sum().reset_index()
+
+# Сумма всей прибыли в выбранной категории и стране для США
+total_profit_us = profit_by_customer_us['netsalesamount'].sum()
+
+# Рассчитываем процент прибыли для каждого магазина для США
+profit_by_customer_us['profit_percentage'] = (profit_by_customer_us['netsalesamount'] / total_profit_us) * 100
+
+# Сортируем по прибыли (чистая прибыль) для США
+profit_by_customer_us = profit_by_customer_us.sort_values(by='netsalesamount', ascending=False)
+
+
+# Фильтруем данные для Бразилии
+filtered_data_br = fact_with_full_info[
     (fact_with_full_info['categoryname'] == 'Женская обувь') & 
     (fact_with_full_info['country'] == 'Бразилия')
 ]
 
-# Агрегируем прибыль по заказчикам
-profit_by_customer = filtered_data.groupby('name')['netsalesamount'].sum().reset_index()
+# Агрегируем прибыль по заказчикам для Бразилии
+profit_by_customer_br = filtered_data_br.groupby('name')['netsalesamount'].sum().reset_index()
 
-# Сумма всей прибыли в выбранной категории и стране
-total_profit = profit_by_customer['netsalesamount'].sum()
+# Сумма всей прибыли в выбранной категории и стране для Бразилии
+total_profit_br = profit_by_customer_br['netsalesamount'].sum()
 
-# Рассчитываем процент прибыли для каждого магазина
-profit_by_customer['profit_percentage'] = (profit_by_customer['netsalesamount'] / total_profit) * 100
+# Рассчитываем процент прибыли для каждого магазина для Бразилии
+profit_by_customer_br['profit_percentage'] = (profit_by_customer_br['netsalesamount'] / total_profit_br) * 100
 
-# Сортируем по прибыли (чистая прибыль)
-profit_by_customer = profit_by_customer.sort_values(by='netsalesamount', ascending=False)
+# Сортируем по прибыли (чистая прибыль) для Бразилии
+profit_by_customer_br = profit_by_customer_br.sort_values(by='netsalesamount', ascending=False)
 
-# Кумулятивная прибыль
-profit_by_customer['cumulative_profit'] = profit_by_customer['netsalesamount'].cumsum()
+# Кумулятивная прибыль для Бразилии
+profit_by_customer_br['cumulative_profit'] = profit_by_customer_br['netsalesamount'].cumsum()
 
-# Кумулятивный процент
-profit_by_customer['cumulative_percent'] = (profit_by_customer['cumulative_profit'] / total_profit) * 100
+# Кумулятивный процент для Бразилии
+profit_by_customer_br['cumulative_percent'] = (profit_by_customer_br['cumulative_profit'] / total_profit_br) * 100
+
 
 # Заголовок страницы
 st.title("Тестовое задание")
 
-# Подзаголовок
+# Подзаголовок для США
 st.subheader("Какие заказчики наиболее прибыльны в товарной категории «женская обувь» в США?")
 
-# Размещаем два графика в строку
+# Размещаем 1 и 2 графики в строку
 col1, col2 = st.columns(2)
 
-# График 1: Наиболее прибыльные магазины
+# График 1: Наиболее прибыльные магазины для США
 with col1:
     st.subheader("Наиболее прибыльные магазины")
-    fig1 = px.bar(profit_by_customer, 
+    fig1 = px.bar(profit_by_customer_us, 
                   x='name', 
                   y='netsalesamount', 
                   orientation='v',  # Вертикальная ориентация (по оси X магазины)
-                  title="Наиболее прибыльные магазины",
+                  title="Наиболее прибыльные магазины (США)",
                   labels={'netsalesamount': 'Чистая прибыль', 'name': 'Заказчик'})
     
     # Растягиваем график на весь экран
@@ -79,32 +99,32 @@ with col1:
     # Отображение графика
     st.plotly_chart(fig1)
 
-# График 2: Круговая диаграмма с процентом прибыли каждого магазина
+# График 2: Круговая диаграмма с процентом прибыли каждого магазина для США
 with col2:
-    st.subheader("Процент прибыли каждого магазина")
-    fig2 = px.pie(profit_by_customer, 
+    st.subheader("Процент прибыли каждого магазина (США)")
+    fig2 = px.pie(profit_by_customer_us, 
                   names='name', 
                   values='profit_percentage',  # Используем процент прибыли
-                  title="Процент прибыли каждого магазина",
+                  title="Процент прибыли каждого магазина (США)",
                   labels={'profit_percentage': 'Процент прибыли', 'name': 'Заказчик'})
     
     # Отображение графика
     st.plotly_chart(fig2)
 
 
-# Подзаголовок для 3,4,5 графиков
+# Подзаголовок для 3, 4 и 5 графиков
 st.subheader("Какие 20% заказчиков приносят 80% прибыли компании в Бразилии?")
 
-# Размещаем графики в строку
+# Размещаем 3 графика в строку
 col3, col4, col5 = st.columns(3)
 
-# График 3: Кумулятивная прибыль (линейный график) с точками
+# График 3: Кумулятивная прибыль (линейный график) с точками для Бразилии
 with col3:
     st.subheader("Кумулятивная прибыль")
-    fig3 = px.line(profit_by_customer, 
+    fig3 = px.line(profit_by_customer_br, 
                    x='name', 
                    y='cumulative_percent', 
-                   title="Кумулятивная прибыль заказчиков",
+                   title="Кумулятивная прибыль заказчиков (Бразилия)",
                    labels={'cumulative_percent': 'Кумулятивный процент прибыли', 'name': 'Заказчик'},
                    markers=True)  # Добавляем маркеры (точки)
     
@@ -121,28 +141,28 @@ with col3:
     # Отображаем график
     st.plotly_chart(fig3)
 
-# График 4: Диаграмма рассеяния (scatter plot)
+# График 4: Диаграмма рассеяния (scatter plot) для Бразилии
 with col4:
-    st.subheader("Диаграмма рассеяния: Прибыль по заказчикам")
-    fig4 = px.scatter(profit_by_customer, 
+    st.subheader("Диаграмма рассеяния: Прибыль по заказчикам (Бразилия)")
+    fig4 = px.scatter(profit_by_customer_br, 
                       x='name', 
                       y='netsalesamount', 
-                      title="Прибыль по заказчикам",
+                      title="Прибыль по заказчикам (Бразилия)",
                       labels={'netsalesamount': 'Чистая прибыль', 'name': 'Заказчик'})
     
     # Отображение графика
     st.plotly_chart(fig4)
 
-# График 5: Бар-график с отсечением 20% заказчиков
+# График 5: Бар-график с отсечением 20% заказчиков для Бразилии
 with col5:
-    st.subheader("20% заказчиков приносят 80% прибыли")
+    st.subheader("20% заказчиков приносят 80% прибыли (Бразилия)")
     # Выбираем 20% заказчиков, которые составляют 80% прибыли
-    top_20_percent_customers = profit_by_customer[profit_by_customer['cumulative_percent'] <= 80]
+    top_20_percent_customers = profit_by_customer_br[profit_by_customer_br['cumulative_percent'] <= 80]
     
     fig5 = px.bar(top_20_percent_customers, 
                   x='name', 
                   y='netsalesamount', 
-                  title="20% заказчиков, которые приносят 80% прибыли",
+                  title="20% заказчиков, которые приносят 80% прибыли (Бразилия)",
                   labels={'netsalesamount': 'Чистая прибыль', 'name': 'Заказчик'})
     
     # Растягиваем график на весь экран
