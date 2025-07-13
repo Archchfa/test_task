@@ -40,6 +40,7 @@ profit_by_customer_us['profit_percentage'] = (profit_by_customer_us['netsalesamo
 # Сортируем по прибыли (чистая прибыль) для США
 profit_by_customer_us = profit_by_customer_us.sort_values(by='netsalesamount', ascending=False)
 
+
 # Для 3, 4 и 5 графиков: фильтруем данные для Бразилии (все магазины из Бразилии)
 filtered_data_br = fact_with_full_info[
     (fact_with_full_info['country'] == 'Бразилия')
@@ -62,6 +63,7 @@ profit_by_customer_br['cumulative_profit'] = profit_by_customer_br['netsalesamou
 
 # Кумулятивный процент для Бразилии
 profit_by_customer_br['cumulative_percent'] = (profit_by_customer_br['cumulative_profit'] / total_profit_br) * 100
+
 
 # Заголовок страницы
 st.title("Тестовое задание")
@@ -226,7 +228,7 @@ fig7 = px.bar(orders_by_country_year,
 st.plotly_chart(fig7)
 
 
-# Дополнение: График 8 - Темпы роста прибыли по странам (Линейный график)
+# Дополнение: График 8 - Темпы роста прибыли по странам (Таблица)
 st.subheader("Темпы роста прибыли по странам")
 
 # Группируем данные по странам и годам, рассчитывая прибыль
@@ -235,13 +237,9 @@ profit_by_country_year = fact_with_full_info.groupby(['country', 'year'])['netsa
 # Рассчитываем процентное изменение прибыли для каждой страны
 profit_by_country_year['profit_growth_pct'] = profit_by_country_year.groupby('country')['netsalesamount'].pct_change() * 100
 
-# Линейный график для отображения темпов роста прибыли по странам
-fig8 = px.line(profit_by_country_year, 
-               x='year', 
-               y='profit_growth_pct', 
-               color='country', 
-               title="Темпы роста прибыли по странам",
-               labels={'profit_growth_pct': 'Темпы роста прибыли (%)', 'year': 'Год', 'country': 'Страна'})
+# Создание таблицы для отображения
+profit_growth_table = profit_by_country_year[['country', 'year', 'profit_growth_pct']]
+profit_growth_table = profit_growth_table.fillna(0)
 
-# Отображаем график
-st.plotly_chart(fig8)
+# Отображаем таблицу
+st.write(profit_growth_table)
