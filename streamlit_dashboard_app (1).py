@@ -25,7 +25,7 @@ fact_with_full_info = pd.merge(fact_with_category, cont[['name', 'country']], on
 # Фильтруем данные по категории "Женская обувь" и стране "Соединённые Штаты Америки"
 filtered_data = fact_with_full_info[
     (fact_with_full_info['categoryname'] == 'Женская обувь') & 
-    (fact_with_full_info['country'] == 'Соединённые Штаты Америки')
+    (fact_with_full_info['country'] == 'Бразилия')
 ]
 
 # Агрегируем прибыль по заказчикам
@@ -44,7 +44,7 @@ profit_by_customer = profit_by_customer.sort_values(by='netsalesamount', ascendi
 st.title("Тестовое задание")
 
 # Подзаголовок
-st.subheader("Какие заказчики наиболее прибыльны в товарной категории «женская обувь» в США?")
+st.subheader("Какие 20% заказчиков приносят 80% прибыли компании в Бразилии?")
 
 # Размещаем два графика в строку
 col1, col2 = st.columns(2)
