@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
+import plotly.graph_objects as go
 
 # Прямые ссылки на raw-файлы на GitHub
 fact_table_url = 'https://raw.githubusercontent.com/Archchfa/test_task/main/fact_table_v2.xlsx'
@@ -39,6 +39,12 @@ profit_by_customer_br['profit_percentage'] = (profit_by_customer_br['netsalesamo
 
 # Сортируем по прибыли (чистая прибыль) для Бразилии
 profit_by_customer_br = profit_by_customer_br.sort_values(by='netsalesamount', ascending=False)
+
+# Кумулятивная прибыль
+profit_by_customer_br['cumulative_profit'] = profit_by_customer_br['netsalesamount'].cumsum()
+
+# Кумулятивный процент
+profit_by_customer_br['cumulative_percent'] = (profit_by_customer_br['cumulative_profit'] / total_profit_br) * 100
 
 # Заголовок страницы
 st.title("Тестовое задание")
@@ -95,24 +101,28 @@ col3, col4, col5 = st.columns(3)
 # График 3: Кумулятивная прибыль (линейный график) с точками для Бразилии
 with col3:
     st.subheader("Кумулятивная прибыль")
-    fig3 = px.line(profit_by_customer_br, 
-                   x='name', 
-                   y='cumulative_percent', 
-                   title="Кумулятивная прибыль заказчиков (Бразилия)",
-                   labels={'cumulative_percent': 'Кумулятивный процент прибыли', 'name': 'Заказчик'},
-                   markers=True)  # Добавляем маркеры (точки)
-    
+    fig3 = go.Figure()
+
+    fig3.add_trace(go.Scatter(
+        x=profit_by_customer_br['name'], 
+        y=profit_by_customer_br['cumulative_percent'], 
+        mode='lines+markers',  # Добавляем маркеры (точки)
+        name='Кумулятивный процент прибыли'
+    ))
+
     # Растягиваем график на весь экран
     fig3.update_layout(
         autosize=True,
         width=700,
         height=500,
-        margin=dict(l=0, r=0, t=30, b=0)
+        margin=dict(l=0, r=0, t=30, b=0),
+        title="Кумулятивная прибыль заказчиков (Бразилия)"
     )
-    
+
+    # Поворот оси X
     fig3.update_xaxes(tickangle=45)
-    
-    # Отображаем график
+
+    # Отображение графика
     st.plotly_chart(fig3)
 
 # График 4: Диаграмма рассеяния (scatter plot) для Бразилии
