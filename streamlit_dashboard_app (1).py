@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 
 # Прямые ссылки на raw-файлы на GitHub
 fact_table_url = 'https://raw.githubusercontent.com/Archchfa/test_task/main/fact_table_v2.xlsx'
@@ -26,7 +25,7 @@ fact_with_full_info = pd.merge(fact_with_category, cont[['name', 'country']], on
 # Фильтруем данные по категории "Женская обувь" и стране "Соединённые Штаты Америки"
 filtered_data = fact_with_full_info[
     (fact_with_full_info['categoryname'] == 'Женская обувь') & 
-    (fact_with_full_info['country'] == 'Бразилия')
+    (fact_with_full_info['country'] == 'Соединённые Штаты Америки')
 ]
 
 # Агрегируем прибыль по заказчикам
@@ -44,7 +43,7 @@ profit_by_customer = profit_by_customer.sort_values(by='netsalesamount', ascendi
 # Заголовок страницы
 st.title("Тестовое задание")
 
-# Подзаголовок для 1 и 2 графиков
+# Подзаголовок
 st.subheader("Какие заказчики наиболее прибыльны в товарной категории «женская обувь» в США?")
 
 # Размещаем два графика в строку
@@ -85,59 +84,3 @@ with col2:
     
     # Отображение графика
     st.plotly_chart(fig2)
-
-# Подзаголовок для 3, 4 и 5 графиков
-st.subheader("Какие 20% заказчиков приносят 80% прибыли компании в Бразилии?")
-
-# Размещаем 3 графика в строку
-col3, col4, col5 = st.columns(3)
-
-# График 3: Кумулятивная прибыль (линейный график) с точками для Бразилии
-with col3:
-    st.subheader("Кумулятивная прибыль")
-    profit_by_customer['cumulative_profit'] = profit_by_customer['netsalesamount'].cumsum()
-    profit_by_customer['cumulative_percent'] = (profit_by_customer['cumulative_profit'] / total_profit) * 100
-    
-    fig3 = px.line(profit_by_customer, 
-                   x='name', 
-                   y='cumulative_percent', 
-                   title="Кумулятивная прибыль заказчиков",
-                   labels={'cumulative_percent': 'Кумулятивный процент прибыли', 'name': 'Заказчик'},
-                   markers=True)  # Добавляем маркеры (точки)
-    
-    # Растягиваем график на весь экран
-    fig3.update_layout(
-        autosize=True,
-        width=700,
-        height=500,
-        margin=dict(l=0, r=0, t=30, b=0)
-    )
-    
-    fig3.update_xaxes(tickangle=45)
-    
-    # Отображаем график
-    st.plotly_chart(fig3)
-
-# График 4: Диаграмма рассеяния (scatter plot) для Бразилии
-with col4:
-    st.subheader("Диаграмма рассеяния: Прибыль по заказчикам (Бразилия)")
-    fig4 = px.scatter(profit_by_customer, 
-                      x='name', 
-                      y='netsalesamount', 
-                      title="Прибыль по заказчикам (Бразилия)",
-                      labels={'netsalesamount': 'Чистая прибыль', 'name': 'Заказчик'})
-    
-    # Отображение графика
-    st.plotly_chart(fig4)
-
-# График 5: Круговая диаграмма с процентом прибыли каждого магазина для Бразилии
-with col5:
-    st.subheader("Процент прибыли каждого магазина (Бразилия)")
-    fig5 = px.pie(profit_by_customer, 
-                  names='name', 
-                  values='profit_percentage',  # Используем процент прибыли
-                  title="Процент прибыли каждого магазина (Бразилия)",
-                  labels={'profit_percentage': 'Процент прибыли', 'name': 'Заказчик'})
-    
-    # Отображение графика
-    st.plotly_chart(fig5)
