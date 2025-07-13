@@ -22,7 +22,7 @@ fact_with_category = pd.merge(fact_with_calendar, products[['productid', 'catego
 # Объединяем fact_with_category с таблицей cont для добавления информации о магазинах
 fact_with_full_info = pd.merge(fact_with_category, cont[['name', 'country']], on='name', how='left')
 
-# Фильтруем данные по категории "Женская обувь" и стране "Соединённые Штаты Америки"
+# Фильтруем данные по категории "Женская обувь" и стране "Соединённые Штаты Америки" (для 1 и 2 графиков)
 filtered_data_us = fact_with_full_info[
     (fact_with_full_info['categoryname'] == 'Женская обувь') & 
     (fact_with_full_info['country'] == 'Соединённые Штаты Америки')
@@ -40,9 +40,9 @@ profit_by_customer_us['profit_percentage'] = (profit_by_customer_us['netsalesamo
 # Сортируем по прибыли (чистая прибыль) для США
 profit_by_customer_us = profit_by_customer_us.sort_values(by='netsalesamount', ascending=False)
 
-# Фильтруем данные для Бразилии
+
+# Для 3, 4 и 5 графиков: фильтруем данные для Бразилии (все магазины из Бразилии)
 filtered_data_br = fact_with_full_info[
-    (fact_with_full_info['categoryname'] == 'Женская обувь') & 
     (fact_with_full_info['country'] == 'Бразилия')
 ]
 
@@ -127,7 +127,7 @@ with col3:
                    title="Кумулятивная прибыль заказчиков (Бразилия)",
                    labels={'cumulative_percent': 'Кумулятивный процент прибыли', 'name': 'Заказчик'},
                    markers=True)  # Добавляем маркеры (точки)
-
+    
     # Растягиваем график на весь экран
     fig3.update_layout(
         autosize=True,
@@ -135,32 +135,23 @@ with col3:
         height=500,
         margin=dict(l=0, r=0, t=30, b=0)
     )
-
+    
     fig3.update_xaxes(tickangle=45)
-
+    
     # Отображаем график
     st.plotly_chart(fig3)
 
-# График 4: Столбчатая диаграмма с отсечением 20% заказчиков для Бразилии
+# График 4: Диаграмма рассеяния (scatter plot) для Бразилии
 with col4:
-    st.subheader("Прибыль по заказчикам (Бразилия)")
-    fig4 = px.bar(profit_by_customer_br, 
-                  x='name', 
-                  y='netsalesamount', 
-                  title="Прибыль по заказчикам (Бразилия)",
-                  labels={'netsalesamount': 'Чистая прибыль', 'name': 'Заказчик'})
+    st.subheader("Диаграмма рассеяния: Прибыль по заказчикам (Бразилия)")
+    fig4 = px.scatter(profit_by_customer_br, 
+                      x='name', 
+                      y='netsalesamount', 
+                      title="Прибыль по заказчикам (Бразилия)",
+                      labels={'netsalesamount': 'Чистая прибыль', 'name': 'Заказчик'})
 
-    # Растягиваем график на весь экран
-    fig4.update_layout(
-        autosize=True,
-        width=700,
-        height=500,
-        margin=dict(l=0, r=0, t=30, b=0)
-    )
 
-    fig4.update_xaxes(tickangle=45)
-
-    # Отображаем график
+    # Отображение графика
     st.plotly_chart(fig4)
 
 # График 5: Круговая диаграмма с процентом прибыли каждого магазина для Бразилии
@@ -171,6 +162,6 @@ with col5:
                   values='profit_percentage',  # Используем процент прибыли
                   title="Процент прибыли каждого магазина (Бразилия)",
                   labels={'profit_percentage': 'Процент прибыли', 'name': 'Заказчик'})
-
+    
     # Отображение графика
     st.plotly_chart(fig5)
