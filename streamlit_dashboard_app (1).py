@@ -91,12 +91,23 @@ st.subheader("Какие 20% заказчиков приносят 80% приб�
 # Размещаем 3 графика в строку
 col3, col4, col5 = st.columns(3)
 
+# Фильтруем данные для Бразилии
+filtered_data_br = fact_with_full_info[fact_with_full_info['country'] == 'Бразилия']
+
+# Агрегируем прибыль по заказчикам для Бразилии
+profit_by_customer_br = filtered_data_br.groupby('name')['netsalesamount'].sum().reset_index()
+
+# Сумма всей прибыли в Бразилии
+total_profit_br = profit_by_customer_br['netsalesamount'].sum()
+
+# Рассчитываем процент прибыли для каждого магазина в Бразилии
+profit_by_customer_br['profit_percentage'] = (profit_by_customer_br['netsalesamount'] / total_profit_br) * 100
+
 # График 3: Кумулятивная прибыль (линейный график) с точками для Бразилии
 with col3:
     st.subheader("Кумулятивная прибыль")
-    profit_by_customer_br = profit_by_customer[profit_by_customer['country'] == 'Бразилия']
     profit_by_customer_br['cumulative_profit'] = profit_by_customer_br['netsalesamount'].cumsum()
-    profit_by_customer_br['cumulative_percent'] = (profit_by_customer_br['cumulative_profit'] / total_profit) * 100
+    profit_by_customer_br['cumulative_percent'] = (profit_by_customer_br['cumulative_profit'] / total_profit_br) * 100
     
     fig3 = px.line(profit_by_customer_br, 
                    x='name', 
