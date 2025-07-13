@@ -46,8 +46,9 @@ st.title("Тестовое задание")
 # Подзаголовок
 st.subheader("Какие 20% заказчиков приносят 80% прибыли компании в Бразилии?")
 
-# Размещаем два графика в строку
-col1, col2 = st.columns(2)
+# Размещаем 5 графиков в строку
+col1, col2, col3 = st.columns(3)
+col4, col5 = st.columns(2)
 
 # График 1: Наиболее прибыльные магазины
 with col1:
@@ -84,3 +85,65 @@ with col2:
     
     # Отображение графика
     st.plotly_chart(fig2)
+
+# График 3: Кумулятивная прибыль (линейный график)
+with col3:
+    st.subheader("Кумулятивная прибыль")
+    profit_by_customer['cumulative_profit'] = profit_by_customer['netsalesamount'].cumsum()
+    profit_by_customer['cumulative_percent'] = (profit_by_customer['cumulative_profit'] / total_profit) * 100
+    
+    fig3 = px.line(profit_by_customer, 
+                   x='name', 
+                   y='cumulative_percent', 
+                   title="Кумулятивная прибыль заказчиков",
+                   labels={'cumulative_percent': 'Кумулятивный процент прибыли', 'name': 'Заказчик'})
+    
+    # Растягиваем график на весь экран
+    fig3.update_layout(
+        autosize=True,
+        width=700,
+        height=500,
+        margin=dict(l=0, r=0, t=30, b=0)
+    )
+    
+    fig3.update_xaxes(tickangle=45)
+    
+    # Отображаем график
+    st.plotly_chart(fig3)
+
+# График 4: Диаграмма рассеяния (scatter plot)
+with col4:
+    st.subheader("Диаграмма рассеяния: Прибыль по заказчикам")
+    fig4 = px.scatter(profit_by_customer, 
+                      x='name', 
+                      y='netsalesamount', 
+                      title="Прибыль по заказчикам",
+                      labels={'netsalesamount': 'Чистая прибыль', 'name': 'Заказчик'})
+    
+    # Отображение графика
+    st.plotly_chart(fig4)
+
+# График 5: Бар-график с отсечением 20% заказчиков
+with col5:
+    st.subheader("20% заказчиков приносят 80% прибыли")
+    # Выбираем 20% заказчиков, которые составляют 80% прибыли
+    top_20_percent_customers = profit_by_customer[profit_by_customer['cumulative_percent'] <= 80]
+    
+    fig5 = px.bar(top_20_percent_customers, 
+                  x='name', 
+                  y='netsalesamount', 
+                  title="20% заказчиков, которые приносят 80% прибыли",
+                  labels={'netsalesamount': 'Чистая прибыль', 'name': 'Заказчик'})
+    
+    # Растягиваем график на весь экран
+    fig5.update_layout(
+        autosize=True,
+        width=700,
+        height=500,
+        margin=dict(l=0, r=0, t=30, b=0)
+    )
+    
+    fig5.update_xaxes(tickangle=45)
+    
+    # Отображение графика
+    st.plotly_chart(fig5)
