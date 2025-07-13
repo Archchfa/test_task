@@ -40,13 +40,19 @@ profit_by_customer['profit_percentage'] = (profit_by_customer['netsalesamount'] 
 # Сортируем по прибыли (чистая прибыль)
 profit_by_customer = profit_by_customer.sort_values(by='netsalesamount', ascending=False)
 
+# Кумулятивная прибыль
+profit_by_customer['cumulative_profit'] = profit_by_customer['netsalesamount'].cumsum()
+
+# Кумулятивный процент
+profit_by_customer['cumulative_percent'] = (profit_by_customer['cumulative_profit'] / total_profit) * 100
+
 # Заголовок страницы
 st.title("Тестовое задание")
 
 # Подзаголовок
 st.subheader("Какие 20% заказчиков приносят 80% прибыли компании в Бразилии?")
 
-# Размещаем 5 графиков в строку
+# Размещаем графики в строку
 col1, col2, col3 = st.columns(3)
 col4, col5 = st.columns(2)
 
@@ -86,17 +92,15 @@ with col2:
     # Отображение графика
     st.plotly_chart(fig2)
 
-# График 3: Кумулятивная прибыль (линейный график)
+# График 3: Кумулятивная прибыль (линейный график) с точками
 with col3:
     st.subheader("Кумулятивная прибыль")
-    profit_by_customer['cumulative_profit'] = profit_by_customer['netsalesamount'].cumsum()
-    profit_by_customer['cumulative_percent'] = (profit_by_customer['cumulative_profit'] / total_profit) * 100
-    
     fig3 = px.line(profit_by_customer, 
                    x='name', 
                    y='cumulative_percent', 
                    title="Кумулятивная прибыль заказчиков",
-                   labels={'cumulative_percent': 'Кумулятивный процент прибыли', 'name': 'Заказчик'})
+                   labels={'cumulative_percent': 'Кумулятивный процент прибыли', 'name': 'Заказчик'},
+                   markers=True)  # Добавляем маркеры (точки)
     
     # Растягиваем график на весь экран
     fig3.update_layout(
