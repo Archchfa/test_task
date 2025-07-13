@@ -143,7 +143,7 @@ with col3:
 
 # График 4: Столбчатая диаграмма с отсечением 20% заказчиков для Бразилии
 with col4:
-    st.subheader("Диаграмма с отсечением 20% заказчиков (Бразилия)")
+    st.subheader("Прибыль по заказчикам (Бразилия)")
     fig4 = px.bar(profit_by_customer_br, 
                   x='name', 
                   y='netsalesamount', 
