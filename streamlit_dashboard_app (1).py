@@ -57,9 +57,8 @@ with col1:
                   y='netsalesamount', 
                   orientation='v',  # Вертикальная ориентация (по оси X магазины)
                   title="Топ-10 прибыльных заказчиков",
-                  labels={'netsalesamount': 'Чистая прибыль', 'name': 'Заказчик'},
-                  color='netsalesamount')  # Убрали тепловую карту
-
+                  labels={'netsalesamount': 'Чистая прибыль', 'name': 'Заказчик'})
+    
     # Растягиваем график на весь экран
     fig1.update_layout(
         autosize=True,
