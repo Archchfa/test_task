@@ -141,13 +141,16 @@ with col3:
     # Отображаем график
     st.plotly_chart(fig3)
 
-# График 4: Столбчатая диаграмма с прибыльностью по заказчикам для Бразилии
+# График 4: Столбчатая диаграмма с прибыльностью по заказчикам для Бразилии (только 80% прибыли)
 with col4:
-    st.subheader("Прибыль по заказчикам (Бразилия)")
-    fig4 = px.bar(profit_by_customer_br, 
+    st.subheader("Прибыль по заказчикам (Бразилия) с 80% прибыли")
+    # Выбираем 80% заказчиков, которые составляют 80% прибыли
+    top_80_percent_customers = profit_by_customer_br[profit_by_customer_br['cumulative_percent'] <= 80]
+    
+    fig4 = px.bar(top_80_percent_customers, 
                   x='name', 
                   y='netsalesamount', 
-                  title="Прибыль по заказчикам (Бразилия)",
+                  title="Прибыль по заказчикам (Бразилия) с 80% прибыли",
                   labels={'netsalesamount': 'Чистая прибыль', 'name': 'Заказчик'})
 
     # Растягиваем график на весь экран
