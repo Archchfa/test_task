@@ -40,9 +40,6 @@ profit_by_customer['profit_percentage'] = (profit_by_customer['netsalesamount'] 
 # Сортируем по прибыли (чистая прибыль)
 profit_by_customer = profit_by_customer.sort_values(by='netsalesamount', ascending=False)
 
-# Топ-10 заказчиков
-top_10_customers = profit_by_customer.head(10)
-
 # Заголовок страницы
 st.title("Тестовое задание")
 
@@ -52,14 +49,14 @@ st.subheader("Какие заказчики наиболее прибыльны 
 # Размещаем два графика в строку
 col1, col2 = st.columns(2)
 
-# График 1: Топ-10 прибыльных заказчиков
+# График 1: Наиболее прибыльные магазины
 with col1:
-    st.subheader("Топ-10 прибыльных заказчиков")
-    fig1 = px.bar(top_10_customers, 
+    st.subheader("Наиболее прибыльные магазины")
+    fig1 = px.bar(profit_by_customer, 
                   x='name', 
                   y='netsalesamount', 
                   orientation='v',  # Вертикальная ориентация (по оси X магазины)
-                  title="Топ-10 прибыльных заказчиков",
+                  title="Наиболее прибыльные магазины",
                   labels={'netsalesamount': 'Чистая прибыль', 'name': 'Заказчик'})
     
     # Растягиваем график на весь экран
