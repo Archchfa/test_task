@@ -179,13 +179,13 @@ with col5:
 
 
 # Дополнение: График 6 - Сумма прибыли для каждой страны по годам (Линейный график)
-st.subheader("Сумма прибыли для каждой страны по годам")
+st.subheader("Сумма прибыли для каждой страны по годам (по grosssalesamount)")
 
 # Добавляем год в данные
 fact_with_full_info['year'] = pd.to_datetime(fact_with_full_info['orderdate']).dt.year
 
-# Группируем данные по странам и годам
-profit_by_country_year = fact_with_full_info.groupby(['country', 'year'])['netsalesamount'].sum().reset_index()
+# Группируем данные по странам и годам с использованием grosssalesamount
+profit_by_country_year = fact_with_full_info.groupby(['country', 'year'])['grosssalesamount'].sum().reset_index()
 
 # Добавляем переключатель между Прибылью и Процентом прибыли
 profit_type = st.radio("Выберите тип данных для отображения:", ('Прибыль', 'Процент прибыли'))
@@ -193,19 +193,19 @@ profit_type = st.radio("Выберите тип данных для отобра
 if profit_type == 'Прибыль':
     fig6 = px.line(profit_by_country_year, 
                    x='year', 
-                   y='netsalesamount', 
+                   y='grosssalesamount', 
                    color='country', 
-                   title="Сумма прибыли по странам и годам",
-                   labels={'netsalesamount': 'Сумма прибыли', 'year': 'Год', 'country': 'Страна'})
+                   title="Сумма прибыли по странам и годам (по grosssalesamount)",
+                   labels={'grosssalesamount': 'Сумма прибыли', 'year': 'Год', 'country': 'Страна'})
 else:
     # Рассчитываем процент прибыли для каждой страны
-    total_profit_per_year = profit_by_country_year.groupby('year')['netsalesamount'].transform('sum')
-    profit_by_country_year['profit_percentage'] = (profit_by_country_year['netsalesamount'] / total_profit_per_year) * 100
+    total_profit_per_year = profit_by_country_year.groupby('year')['grosssalesamount'].transform('sum')
+    profit_by_country_year['profit_percentage'] = (profit_by_country_year['grosssalesamount'] / total_profit_per_year) * 100
     fig6 = px.line(profit_by_country_year, 
                    x='year', 
                    y='profit_percentage', 
                    color='country', 
-                   title="Процент прибыли по странам и годам",
+                   title="Процент прибыли по странам и годам (по grosssalesamount)",
                    labels={'profit_percentage': 'Процент прибыли', 'year': 'Год', 'country': 'Страна'})
 
 st.plotly_chart(fig6)
@@ -226,3 +226,20 @@ fig7 = px.bar(orders_by_country_year,
               labels={'orderid': 'Количество заказов', 'year': 'Год', 'country': 'Страна'})
 
 st.plotly_chart(fig7)
+
+
+# Дополнение: Таблица роста прибыли по странам
+st.subheader("Темпы роста прибыли по странам")
+
+# Группируем данные по странам и годам, рассчитывая прибыль
+profit_by_country_year = fact_with_full_info.groupby(['country', 'year'])['grosssalesamount'].sum().reset_index()
+
+# Рассчитываем процентное изменение прибыли для каждой страны
+profit_by_country_year['profit_growth_pct'] = profit_by_country_year.groupby('country')['grosssalesamount'].pct_change() * 100
+
+# Создание таблицы для отображения
+profit_growth_table = profit_by_country_year[['country', 'year', 'profit_growth_pct']]
+profit_growth_table = profit_growth_table.fillna(0)
+
+# Отображаем таблицу
+st.write(profit_growth_table)
