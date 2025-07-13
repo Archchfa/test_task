@@ -187,6 +187,9 @@ fact_with_full_info['year'] = pd.to_datetime(fact_with_full_info['orderdate']).d
 # Исключаем 2020 год
 fact_with_full_info = fact_with_full_info[fact_with_full_info['year'] != 2020]
 
+# Исключаем дробные года (например, 2018.5)
+fact_with_full_info['year'] = fact_with_full_info['year'].astype(int)
+
 # Группируем данные по странам и годам с использованием grosssalesamount
 profit_by_country_year = fact_with_full_info.groupby(['country', 'year'])['grosssalesamount'].sum().reset_index()
 
