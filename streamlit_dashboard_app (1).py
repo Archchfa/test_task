@@ -84,7 +84,8 @@ with col1:
                   orientation='v',  # Вертикальная ориентация (по оси X магазины)
                   title="Наиболее прибыльные магазины (США)",
                   labels={'netsalesamount': 'Чистая прибыль', 'name': 'Заказчик'})
-    
+
+
     # Растягиваем график на весь экран
     fig1.update_layout(
         autosize=True,
@@ -153,27 +154,14 @@ with col4:
     # Отображение графика
     st.plotly_chart(fig4)
 
-# График 5: Бар-график с отсечением 20% заказчиков для Бразилии
+# График 5: Круговая диаграмма с процентом прибыли каждого магазина для Бразилии
 with col5:
-    st.subheader("20% заказчиков приносят 80% прибыли (Бразилия)")
-    # Выбираем 20% заказчиков, которые составляют 80% прибыли
-    top_20_percent_customers = profit_by_customer_br[profit_by_customer_br['cumulative_percent'] <= 80]
-    
-    fig5 = px.bar(top_20_percent_customers, 
-                  x='name', 
-                  y='netsalesamount', 
-                  title="20% заказчиков, которые приносят 80% прибыли (Бразилия)",
-                  labels={'netsalesamount': 'Чистая прибыль', 'name': 'Заказчик'})
-    
-    # Растягиваем график на весь экран
-    fig5.update_layout(
-        autosize=True,
-        width=700,
-        height=500,
-        margin=dict(l=0, r=0, t=30, b=0)
-    )
-    
-    fig5.update_xaxes(tickangle=45)
+    st.subheader("Процент прибыли каждого магазина (Бразилия)")
+    fig5 = px.pie(profit_by_customer_br, 
+                  names='name', 
+                  values='profit_percentage',  # Используем процент прибыли
+                  title="Процент прибыли каждого магазина (Бразилия)",
+                  labels={'profit_percentage': 'Процент прибыли', 'name': 'Заказчик'})
     
     # Отображение графика
     st.plotly_chart(fig5)
