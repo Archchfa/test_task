@@ -31,6 +31,23 @@ fact_with_full_info['year'] = pd.to_datetime(fact_with_full_info['orderdate']).d
 # Исключаем 2020 год
 fact_with_full_info = fact_with_full_info[fact_with_full_info['year'] != 2020]
 
+# Фильтруем данные для США и агрегируем прибыль по заказчикам
+filtered_data_us = fact_with_full_info[
+    (fact_with_full_info['country'] == 'Соединённые Штаты Америки')
+]
+
+# Агрегируем прибыль по заказчикам для США
+profit_by_customer_us = filtered_data_us.groupby('name')['netsalesamount'].sum().reset_index()
+
+# Сумма всей прибыли в выбранной категории и стране для США
+total_profit_us = profit_by_customer_us['netsalesamount'].sum()
+
+# Рассчитываем процент прибыли для каждого магазина для США
+profit_by_customer_us['profit_percentage'] = (profit_by_customer_us['netsalesamount'] / total_profit_us) * 100
+
+# Сортируем по прибыли (чистая прибыль) для США
+profit_by_customer_us = profit_by_customer_us.sort_values(by='netsalesamount', ascending=False)
+
 # Группируем данные по employeename и году, суммируем grosssalesamount
 sales_by_employee_year = fact_with_full_info.groupby(['employeename', 'year'])['grosssalesamount'].sum().reset_index()
 
