@@ -229,6 +229,7 @@ fig7 = px.bar(orders_by_country_year,
               labels={'orderid': 'Количество заказов', 'year': 'Год', 'country': 'Страна'})
 
 st.plotly_chart(fig7)
+
 # Подзаголовок для графика по менеджерам
 st.subheader("Какой из менеджеров дает компании наибольший объем продаж?")
 
@@ -280,16 +281,16 @@ st.subheader("Распределение продаж между менедже�
 # Выбор года для анализа
 selected_year = st.selectbox(
     "Выберите год для отображения процента продаж:", 
-    sorted(fact_with_employeename['year'].unique())
+    sorted(fact_with_full_info['year'].unique())
 )
 
 # Фильтруем данные по выбранному году
-fact_with_employeename_selected_year = fact_with_employeename[
-    fact_with_employeename['year'] == selected_year
+fact_with_full_info_selected_year = fact_with_full_info[
+    fact_with_full_info['year'] == selected_year
 ]
 
 # Агрегируем данные по сотрудникам за выбранный год
-sales_by_employeename_selected_year = fact_with_employeename_selected_year.groupby(
+sales_by_employeename_selected_year = fact_with_full_info_selected_year.groupby(
     'employeename'
 )['grosssalesamount'].sum().reset_index()
 
