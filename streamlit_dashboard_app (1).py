@@ -65,6 +65,29 @@ profit_by_customer_br['cumulative_profit'] = profit_by_customer_br['netsalesamou
 profit_by_customer_br['cumulative_percent'] = (profit_by_customer_br['cumulative_profit'] / total_profit_br) * 100
 
 
+# Дополнение: График для суммы grosssalesamount по employee_id по годам
+
+# Добавляем год в данные
+fact_with_full_info['year'] = pd.to_datetime(fact_with_full_info['orderdate']).dt.year
+
+# Исключаем 2020 год
+fact_with_full_info = fact_with_full_info[fact_with_full_info['year'] != 2020]
+
+# Группируем данные по employee_id и году, суммируем grosssalesamount
+sales_by_employee_year = fact_with_full_info.groupby(['employee_id', 'year'])['grosssalesamount'].sum().reset_index()
+
+# Столбчатая диаграмма: по горизонтали годы, по вертикали сумма grosssalesamount для каждого employee_id
+fig_employee_sales = px.bar(sales_by_employee_year, 
+                            x='year', 
+                            y='grosssalesamount', 
+                            color='employee_id',  # Цвета по employee_id
+                            title="Сумма Gross Sales по Employee_id по годам",
+                            labels={'grosssalesamount': 'Сумма grosssalesamount', 'year': 'Год', 'employee_id': 'Employee ID'})
+
+# Отображаем график
+st.plotly_chart(fig_employee_sales)
+
+
 # Заголовок страницы
 st.title("Тестовое задание")
 
@@ -181,15 +204,6 @@ with col5:
 # Дополнение: График 6 - Сумма прибыли для каждой страны по годам (по grosssalesamount)
 st.subheader("Сумма прибыли для каждой страны по годам (по grosssalesamount)")
 
-# Добавляем год в данные
-fact_with_full_info['year'] = pd.to_datetime(fact_with_full_info['orderdate']).dt.year
-
-# Исключаем 2020 год
-fact_with_full_info = fact_with_full_info[fact_with_full_info['year'] != 2020]
-
-# Исключаем дробные года (например, 2018.5)
-fact_with_full_info['year'] = fact_with_full_info['year'].astype(int)
-
 # Группируем данные по странам и годам с использованием grosssalesamount
 profit_by_country_year = fact_with_full_info.groupby(['country', 'year'])['grosssalesamount'].sum().reset_index()
 
@@ -222,9 +236,6 @@ st.subheader("Количество заказов по странам и год�
 
 # Группируем данные по странам и годам, считая количество заказов
 orders_by_country_year = fact_with_full_info.groupby(['country', 'year'])['orderid'].nunique().reset_index()
-
-# Исключаем 2020 год
-orders_by_country_year = orders_by_country_year[orders_by_country_year['year'] != 2020]
 
 # Столбчатая диаграмма
 fig7 = px.bar(orders_by_country_year, 
