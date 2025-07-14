@@ -311,3 +311,5 @@ try:
 
 except Exception as e:
     st.error(f"Произошла ошибка при анализе категории 'Пляжная одежда': {str(e)}")
+st.write("Доступные столбцы в данных:", list(fact_with_full_info.columns))
+st.write("Доступные столбцы в products:", list(products.columns))
