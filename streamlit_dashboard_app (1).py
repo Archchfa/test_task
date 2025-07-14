@@ -28,6 +28,50 @@ fact_with_employeename = pd.merge(fact_with_full_info, staff[['employeeid', 'emp
 # Добавляем год в данные
 fact_with_employeename['year'] = pd.to_datetime(fact_with_employeename['orderdate']).dt.year
 
+# Создание переменной для США: фильтруем данные по категории "Женская обувь" и стране "Соединённые Штаты Америки"
+filtered_data_us = fact_with_employeename[
+    (fact_with_employeename['categoryname'] == 'Женская обувь') & 
+    (fact_with_employeename['country'] == 'Соединённые Штаты Америки')
+]
+
+# Агрегируем прибыль по заказчикам для США
+profit_by_customer_us = filtered_data_us.groupby('name')['netsalesamount'].sum().reset_index()
+
+# Сумма всей прибыли в выбранной категории и стране для США
+total_profit_us = profit_by_customer_us['netsalesamount'].sum()
+
+# Рассчитываем процент прибыли для каждого магазина для США
+profit_by_customer_us['profit_percentage'] = (profit_by_customer_us['netsalesamount'] / total_profit_us) * 100
+
+# Сортируем по прибыли (чистая прибыль) для США
+profit_by_customer_us = profit_by_customer_us.sort_values(by='netsalesamount', ascending=False)
+
+
+# Для 3, 4 и 5 графиков: фильтруем данные для Бразилии (все магазины из Бразилии)
+filtered_data_br = fact_with_employeename[
+    (fact_with_employeename['country'] == 'Бразилия')
+]
+
+# Агрегируем прибыль по заказчикам для Бразилии
+profit_by_customer_br = filtered_data_br.groupby('name')['netsalesamount'].sum().reset_index()
+
+# Сумма всей прибыли в выбранной категории и стране для Бразилии
+total_profit_br = profit_by_customer_br['netsalesamount'].sum()
+
+# Рассчитываем процент прибыли для каждого магазина для Бразилии
+profit_by_customer_br['profit_percentage'] = (profit_by_customer_br['netsalesamount'] / total_profit_br) * 100
+
+# Сортируем по прибыли (чистая прибыль) для Бразилии
+profit_by_customer_br = profit_by_customer_br.sort_values(by='netsalesamount', ascending=False)
+
+# Кумулятивная прибыль для Бразилии
+profit_by_customer_br['cumulative_profit'] = profit_by_customer_br['netsalesamount'].cumsum()
+
+# Кумулятивный процент для Бразилии
+profit_by_customer_br['cumulative_percent'] = (profit_by_customer_br['cumulative_profit'] / total_profit_br) * 100
+
+
+# Новый набор данных для графиков: процент продаж сотрудников за выбранный год
 # Выбор года для анализа
 selected_year = st.selectbox("Выберите год для отображения процента продаж:", sorted(fact_with_employeename['year'].unique()))
 
@@ -41,26 +85,21 @@ sales_by_employeename_selected_year = fact_with_employeename_selected_year.group
 total_sales_selected_year = sales_by_employeename_selected_year['grosssalesamount'].sum()
 sales_by_employeename_selected_year['sales_percentage'] = (sales_by_employeename_selected_year['grosssalesamount'] / total_sales_selected_year) * 100
 
-# Новый набор данных для графиков: процент продаж сотрудников за выбранный год
-profit_by_employee_sales = sales_by_employeename_selected_year.copy()
 
-# Новый график: круговая диаграмма с процентами продаж за выбранный год
-fig_pie_employee_sales = px.pie(profit_by_employee_sales, 
+# Круговая диаграмма для процента продаж сотрудников за выбранный год
+fig_pie_employee_sales = px.pie(sales_by_employeename_selected_year, 
                                 names='employeename', 
                                 values='sales_percentage', 
                                 title=f"Процент продаж сотрудников за {selected_year}",
                                 labels={'sales_percentage': 'Процент продаж', 'employeename': 'Менеджер'})
 
-# Столбчатая диаграмма с суммой grosssalesamount по сотрудникам
-sales_by_employee_year = fact_with_employeename.groupby(['employee_id', 'year'])['grosssalesamount'].sum().reset_index()
-
-fig_employee_sales = px.bar(sales_by_employee_year, 
-                            x='year', 
-                            y='grosssalesamount', 
-                            color='employee_id',  # Цвета по employee_id
-                            barmode='group',  # Столбцы рядом
-                            title="Сумма Gross Sales по Employee (по годам)",
-                            labels={'grosssalesamount': 'Сумма grosssalesamount', 'year': 'Год', 'employee_id': 'Employee ID'})
+# Столбчатая диаграмма с суммой grosssalesamount по сотрудникам за выбранный год
+fig_employee_sales = px.bar(sales_by_employeename_selected_year, 
+                            x='employeename', 
+                            y='sales_percentage', 
+                            color='employeename', 
+                            title=f"Сумма продаж сотрудников за {selected_year}",
+                            labels={'sales_percentage': 'Процент продаж', 'employeename': 'Менеджер'})
 
 # Заголовок страницы
 st.title("Тестовое задание")
