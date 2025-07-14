@@ -189,3 +189,102 @@ fig_pie = px.pie(manager_percent,
                 values='percentage',
                 title=f"Распределение продаж менеджеров за {selected_year} год")
 st.plotly_chart(fig_pie)
+
+# ... [предыдущий код остается без изменений до раздела анализа менеджеров] ...
+
+# Анализ менеджеров (включая 2020 год)
+st.subheader("Анализ продаж менеджеров (включая 2020 год)")
+
+# Новый анализ: зависимость объема продаж от скидок
+st.subheader("Зависимость объема продаж от среднего размера скидки")
+
+# Группируем данные по менеджерам
+manager_stats = fact_with_employeename.groupby('employeename').agg(
+    total_sales=('grosssalesamount', 'sum'),
+    avg_discount=('discountpercent', 'mean'),
+    order_count=('orderid', 'nunique')
+).reset_index()
+
+# Создаем scatter plot
+fig_discount_analysis = px.scatter(
+    manager_stats,
+    x='avg_discount',
+    y='total_sales',
+    size='order_count',
+    color='employeename',
+    hover_name='employeename',
+    hover_data=['avg_discount', 'total_sales', 'order_count'],
+    title="Зависимость объема продаж от среднего размера скидки",
+    labels={
+        'avg_discount': 'Средний размер скидки (%)',
+        'total_sales': 'Общий объем продаж',
+        'order_count': 'Количество заказов',
+        'employeename': 'Менеджер'
+    }
+)
+
+# Добавляем линии для медианных значений
+median_discount = manager_stats['avg_discount'].median()
+median_sales = manager_stats['total_sales'].median()
+
+fig_discount_analysis.update_layout(
+    shapes=[
+        # Вертикальная линия (медианная скидка)
+        dict(
+            type='line',
+            x0=median_discount,
+            y0=0,
+            x1=median_discount,
+            y1=manager_stats['total_sales'].max(),
+            line=dict(color='red', dash='dash')
+        ),
+        # Горизонтальная линия (медианные продажи)
+        dict(
+            type='line',
+            x0=0,
+            y0=median_sales,
+            x1=manager_stats['avg_discount'].max(),
+            y1=median_sales,
+            line=dict(color='red', dash='dash')
+        )
+    ],
+    annotations=[
+        dict(
+            x=median_discount,
+            y=manager_stats['total_sales'].max(),
+            xref='x',
+            yref='y',
+            text='Средняя скидка',
+            showarrow=True,
+            arrowhead=1,
+            ax=-40,
+            ay=-40
+        ),
+        dict(
+            x=manager_stats['avg_discount'].max(),
+            y=median_sales,
+            xref='x',
+            yref='y',
+            text='Средние продажи',
+            showarrow=True,
+            arrowhead=1,
+            ax=40,
+            ay=40
+        )
+    ]
+)
+
+st.plotly_chart(fig_discount_analysis)
+
+# График продаж по менеджерам по годам
+manager_sales = fact_with_employeename.groupby(['employeename', 'year'])['grosssalesamount'].sum().reset_index()
+fig_manager = px.bar(manager_sales,
+                    x='year',
+                    y='grosssalesamount',
+                    color='employeename',
+                    barmode='group',
+                    title="Продажи по менеджерам по годам")
+fig_manager.update_layout(height=500, width=900)
+st.plotly_chart(fig_manager)
+
+# ... [остальной код остается без изменений] ...
