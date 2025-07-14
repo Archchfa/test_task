@@ -41,20 +41,99 @@ fact_with_employeename = pd.merge(
 )
 
 # Выбор года для анализа
-selected_year = st.selectbox(
-    "Выберите год для анализа менеджеров:",
-    sorted(fact_with_employeename['year'].unique())
-)
+col1, col2 = st.columns([3, 1])
 
-# Фильтруем данные по выбранному году
-year_data = fact_with_employeename[fact_with_employeename['year'] == selected_year]
+# График 10: Зависимость объема продаж от среднего размера скидки
+with col1:
+    st.subheader("Зависимость объема продаж от среднего размера скидки")
 
-# Группируем данные по менеджерам для выбранного года
-manager_stats = year_data.groupby('employeename').agg(
-    total_sales=('grosssalesamount', 'sum'),
-    avg_discount=('discount', 'mean'),  # Используем столбец 'discount'
-    order_count=('orderid', 'nunique')
-).reset_index()
+    # Выбор года для анализа
+    selected_year = st.selectbox(
+        "Выберите год для анализа менеджеров:",
+        sorted(fact_with_employeename['year'].unique())
+    )
+
+    # Фильтруем данные по выбранному году
+    year_data = fact_with_employeename[fact_with_employeename['year'] == selected_year]
+
+    # Группируем данные по менеджерам для выбранного года
+    manager_stats = year_data.groupby('employeename').agg(
+        total_sales=('grosssalesamount', 'sum'),
+        avg_discount=('discount', 'mean'),  # Используем столбец 'discount'
+        order_count=('orderid', 'nunique')
+    ).reset_index()
+
+    # Создаем scatter plot для анализа скидки и объема продаж
+    fig_discount_analysis = px.scatter(
+        manager_stats,
+        x='avg_discount',
+        y='total_sales',
+        size='order_count',
+        color='employeename',
+        hover_name='employeename',
+        hover_data=['avg_discount', 'total_sales', 'order_count'],
+        title=f"Зависимость объема продаж от среднего размера скидки за {selected_year}",
+        labels={
+            'avg_discount': 'Средний размер скидки (%)',
+            'total_sales': 'Общий объем продаж',
+            'order_count': 'Количество заказов',
+            'employeename': 'Менеджер'
+        }
+    )
+
+    # Добавляем линии для медианных значений
+    median_discount = manager_stats['avg_discount'].median()
+    median_sales = manager_stats['total_sales'].median()
+
+    fig_discount_analysis.update_layout(
+        shapes=[
+            # Вертикальная линия (медианная скидка)
+            dict(
+                type='line',
+                x0=median_discount,
+                y0=0,
+                x1=median_discount,
+                y1=manager_stats['total_sales'].max(),
+                line=dict(color='red', dash='dash')
+            ),
+            # Горизонтальная линия (медианные продажи)
+            dict(
+                type='line',
+                x0=0,
+                y0=median_sales,
+                x1=manager_stats['avg_discount'].max(),
+                y1=median_sales,
+                line=dict(color='red', dash='dash')
+            )
+        ],
+        annotations=[
+            dict(
+                x=median_discount,
+                y=manager_stats['total_sales'].max(),
+                xref='x',
+                yref='y',
+                text='Средняя скидка',
+                showarrow=True,
+                arrowhead=1,
+                ax=-40,
+                ay=-40
+            ),
+            dict(
+                x=manager_stats['avg_discount'].max(),
+                y=median_sales,
+                xref='x',
+                yref='y',
+                text='Средние продажи',
+                showarrow=True,
+                arrowhead=1,
+                ax=40,
+                ay=40
+            )
+        ]
+    )
+
+    # Отображаем график
+    st.plotly_chart(fig_discount_analysis)
 
 # График 1: Наиболее прибыльные магазины для США
 filtered_data_us = fact_with_full_info[
@@ -192,76 +271,3 @@ fig_pie = px.pie(manager_percent,
                 title=f"Распределение продаж менеджеров за {selected_year} год")
 st.plotly_chart(fig_pie)
 
-# Новый анализ: зависимость объема продаж от среднего размера скидки
-st.subheader("Зависимость объема продаж от среднего размера скидки")
-
-# Создаем scatter plot для анализа скидки и объема продаж
-fig_discount_analysis = px.scatter(
-    manager_stats,
-    x='avg_discount',
-    y='total_sales',
-    size='order_count',
-    color='employeename',
-    hover_name='employeename',
-    hover_data=['avg_discount', 'total_sales', 'order_count'],
-    title=f"Зависимость объема продаж от среднего размера скидки за {selected_year}",
-    labels={
-        'avg_discount': 'Средний размер скидки (%)',
-        'total_sales': 'Общий объем продаж',
-        'order_count': 'Количество заказов',
-        'employeename': 'Менеджер'
-    }
-)
-
-# Добавляем линии для медианных значений
-median_discount = manager_stats['avg_discount'].median()
-median_sales = manager_stats['total_sales'].median()
-
-fig_discount_analysis.update_layout(
-    shapes=[
-        # Вертикальная линия (медианная скидка)
-        dict(
-            type='line',
-            x0=median_discount,
-            y0=0,
-            x1=median_discount,
-            y1=manager_stats['total_sales'].max(),
-            line=dict(color='red', dash='dash')
-        ),
-        # Горизонтальная линия (медианные продажи)
-        dict(
-            type='line',
-            x0=0,
-            y0=median_sales,
-            x1=manager_stats['avg_discount'].max(),
-            y1=median_sales,
-            line=dict(color='red', dash='dash')
-        )
-    ],
-    annotations=[
-        dict(
-            x=median_discount,
-            y=manager_stats['total_sales'].max(),
-            xref='x',
-            yref='y',
-            text='Средняя скидка',
-            showarrow=True,
-            arrowhead=1,
-            ax=-40,
-            ay=-40
-        ),
-        dict(
-            x=manager_stats['avg_discount'].max(),
-            y=median_sales,
-            xref='x',
-            yref='y',
-            text='Средние продажи',
-            showarrow=True,
-            arrowhead=1,
-            ax=40,
-            ay=40
-        )
-    ]
-)
-
-st.plotly_chart(fig_discount_analysis)
