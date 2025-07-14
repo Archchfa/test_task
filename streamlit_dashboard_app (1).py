@@ -71,6 +71,15 @@ fact_with_full_info['year'] = pd.to_datetime(fact_with_full_info['orderdate']).d
 # Исключаем 2020 год
 fact_with_full_info = fact_with_full_info[fact_with_full_info['year'] != 2020]
 
+# Объединяем данные с таблицей staff для получения имен менеджеров
+fact_with_full_info_with_names = pd.merge(
+    fact_with_full_info, 
+    staff[['employeeid', 'employeename']],  # Убедитесь, что используете employeeid и employeename
+    left_on='employee_id',
+    right_on='employeeid',
+    how='left'
+)
+
 # Заголовок страницы
 st.title("Тестовое задание")
 
@@ -233,18 +242,9 @@ st.plotly_chart(fig7)
 # Подзаголовок для графика по менеджерам
 st.subheader("Какой из менеджеров дает компании наибольший объем продаж?")
 
-# Объединяем данные с таблицей staff для получения имен менеджеров
-sales_by_employee_year_with_names = pd.merge(
-    fact_with_full_info.groupby(['employee_id', 'year'])['grosssalesamount'].sum().reset_index(),
-    staff[['employeeid', 'employeename']],
-    left_on='employee_id',
-    right_on='employeeid',
-    how='left'
-)
-
 # Столбчатая диаграмма с группировкой (столбцы рядом)
 fig_employee_sales = px.bar(
-    sales_by_employee_year_with_names, 
+    fact_with_full_info_with_names.groupby(['employeename', 'year'])['grosssalesamount'].sum().reset_index(), 
     x='year', 
     y='grosssalesamount', 
     color='employeename',  # Используем имена вместо ID
@@ -255,7 +255,7 @@ fig_employee_sales = px.bar(
         'year': 'Год', 
         'employeename': 'Менеджер'
     },
-    category_orders={"year": sorted(sales_by_employee_year_with_names['year'].unique())}  # Сортировка годов
+    category_orders={"year": sorted(fact_with_full_info_with_names['year'].unique())}  # Сортировка годов
 )
 
 # Настраиваем размер графика
@@ -281,12 +281,12 @@ st.subheader("Распределение продаж между менедже�
 # Выбор года для анализа
 selected_year = st.selectbox(
     "Выберите год для отображения процента продаж:", 
-    sorted(fact_with_full_info['year'].unique())
+    sorted(fact_with_full_info_with_names['year'].unique())
 )
 
 # Фильтруем данные по выбранному году
-fact_with_full_info_selected_year = fact_with_full_info[
-    fact_with_full_info['year'] == selected_year
+fact_with_full_info_selected_year = fact_with_full_info_with_names[
+    fact_with_full_info_with_names['year'] == selected_year
 ]
 
 # Агрегируем данные по сотрудникам за выбранный год
