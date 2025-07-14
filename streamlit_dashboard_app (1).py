@@ -45,16 +45,14 @@ profit_by_customer_us = profit_by_customer_us.sort_values(by='netsalesamount', a
 
 col1, col2 = st.columns(2)
 with col1:
-    st.subheader("Наиболее прибыльные магазины")
     fig1 = px.bar(profit_by_customer_us, x='name', y='netsalesamount',
-                 title="Наиболее прибыльные магазины (США)",
+                 title="Наиболее прибыльные магазины",
                  labels={'netsalesamount': 'Чистая прибыль', 'name': 'Заказчик'})
     st.plotly_chart(fig1)
 
 with col2:
-    st.subheader("Процент прибыли каждого магазина")
     fig2 = px.pie(profit_by_customer_us, names='name', values='profit_percentage',
-                 title="Процент прибыли каждого магазина (США)")
+                 title="Процент прибыли каждого магазина")
     st.plotly_chart(fig2)
 
 # 2. График для Бразилии - 20% заказчиков
@@ -70,44 +68,40 @@ profit_by_customer_br['cumulative_percent'] = (profit_by_customer_br['cumulative
 
 col3, col4, col5 = st.columns(3)
 with col3:
-    st.subheader("Кумулятивная прибыль")
     fig3 = px.line(profit_by_customer_br, x='name', y='cumulative_percent',
-                  title="Кумулятивная прибыль заказчиков (Бразилия)", markers=True)
+                  title="Кумулятивная прибыль заказчиков", markers=True)
     st.plotly_chart(fig3)
 
 with col4:
-    st.subheader("Прибыль по заказчикам (80% прибыли)")
     top_80 = profit_by_customer_br[profit_by_customer_br['cumulative_percent'] <= 80]
     fig4 = px.bar(top_80, x='name', y='netsalesamount',
                  title="Прибыль по заказчикам (80% прибыли)")
     st.plotly_chart(fig4)
 
 with col5:
-    st.subheader("Процент прибыли (Бразилия)")
     fig5 = px.pie(profit_by_customer_br, names='name', values='profit_percentage',
-                 title="Процент прибыли (Бразилия)")
+                 title="Процент прибыли")
     st.plotly_chart(fig5)
 
-# 3. График по странам и годам
-st.subheader("Сумма прибыли для каждой страны по годам")
+# 3. График по странам
+st.subheader("Какие страны наиболее перспективны?")
 profit_by_country_year = fact_with_full_info.groupby(['country', 'year'])['grosssalesamount'].sum().reset_index()
-profit_type = st.radio("Тип данных:", ('Прибыль', 'Процент прибыли'))
+profit_type = st.radio("Тип данных:", ('Прибыль', 'Процент прибыли'), key='profit_type')
 
 if profit_type == 'Прибыль':
     fig6 = px.line(profit_by_country_year, x='year', y='grosssalesamount', color='country',
-                  title="Сумма прибыли по странам и годам")
+                  title="Динамика прибыли по странам")
 else:
     profit_by_country_year['profit_percentage'] = profit_by_country_year.groupby('year')['grosssalesamount'].apply(
         lambda x: x / x.sum() * 100)
     fig6 = px.line(profit_by_country_year, x='year', y='profit_percentage', color='country',
-                  title="Процент прибыли по странам и годам")
+                  title="Доля прибыли по странам")
 st.plotly_chart(fig6)
 
 # 4. Количество заказов по странам и годам
-st.subheader("Количество заказов по странам и годам")
 orders_by_country_year = fact_with_full_info.groupby(['country', 'year'])['orderid'].nunique().reset_index()
 fig7 = px.bar(orders_by_country_year, x='year', y='orderid', color='country',
-             title="Количество заказов по странам и годам")
+             title="")
 st.plotly_chart(fig7)
 
 # 5. Анализ менеджеров
@@ -123,41 +117,75 @@ selected_year = st.selectbox(
     sorted(fact_with_employeename['year'].unique())
 )
 
-year_data = fact_with_employeename[fact_with_employeename['year'] == selected_year]
-manager_percent = year_data.groupby('employeename')['grosssalesamount'].sum().reset_index()
-manager_percent['percentage'] = manager_percent['grosssalesamount'] / manager_percent['grosssalesamount'].sum() * 100
+# Размещаем графики pie и discount на одном уровне
+col_pie, col_discount = st.columns(2)
 
-fig_pie = px.pie(manager_percent, names='employeename', values='percentage',
-                title=f"Распределение продаж менеджеров за {selected_year} год")
-st.plotly_chart(fig_pie)
+with col_pie:
+    year_data = fact_with_employeename[fact_with_employeename['year'] == selected_year]
+    manager_percent = year_data.groupby('employeename')['grosssalesamount'].sum().reset_index()
+    manager_percent['percentage'] = manager_percent['grosssalesamount'] / manager_percent['grosssalesamount'].sum() * 100
+    fig_pie = px.pie(manager_percent, names='employeename', values='percentage',
+                    title=f"Распределение продаж менеджеров за {selected_year} год")
+    st.plotly_chart(fig_pie)
 
-# 6. НОВЫЙ ГРАФИК: Дни недели для категории "Одежда для новорожденных" (2019-2020)
+with col_discount:
+    # График зависимости объема продаж от скидки
+    year_data = fact_with_employeename[fact_with_employeename['year'] == selected_year]
+    manager_stats = year_data.groupby('employeename').agg(
+        total_sales=('grosssalesamount', 'sum'),
+        avg_discount=('discount', 'mean'),
+        order_count=('orderid', 'nunique')
+    ).reset_index()
+
+    fig_discount = px.scatter(
+        manager_stats,
+        x='avg_discount',
+        y='total_sales',
+        size='order_count',
+        color='employeename',
+        hover_name='employeename',
+        title=f"Зависимость продаж от скидки за {selected_year} год",
+        labels={
+            'avg_discount': 'Средний размер скидки (%)',
+            'total_sales': 'Объем продаж',
+            'order_count': 'Количество заказов'
+        }
+    )
+    
+    # Добавляем медианные линии
+    median_discount = manager_stats['avg_discount'].median()
+    median_sales = manager_stats['total_sales'].median()
+    
+    fig_discount.update_layout(
+        shapes=[
+            dict(type='line', x0=median_discount, y0=0, x1=median_discount, 
+                 y1=manager_stats['total_sales'].max(), line=dict(color='red', dash='dash')),
+            dict(type='line', x0=0, y0=median_sales, x1=manager_stats['avg_discount'].max(), 
+                 y1=median_sales, line=dict(color='red', dash='dash'))
+        ]
+    )
+    st.plotly_chart(fig_discount)
+
+# 6. График дней недели для новорожденных
 st.subheader("Какие дни недели наиболее продуктивны для продаж товарной категории «Одежда для новорожденных»?")
 
-# Фильтруем данные за 2019-2020 годы и нужную категорию
 newborn_data = fact_with_employeename[
     (fact_with_employeename['categoryname'] == 'Одежда для новорожденных') &
     (fact_with_employeename['year'].isin([2019, 2020]))
 ]
 
-# Добавляем день недели
 newborn_data['day_of_week'] = pd.to_datetime(newborn_data['orderdate']).dt.dayofweek
 weekday_names = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
 newborn_data['weekday_name'] = newborn_data['day_of_week'].apply(lambda x: weekday_names[x])
 
-# Группируем по дню недели
 sales_by_weekday = newborn_data.groupby('weekday_name')['grosssalesamount'].sum().reset_index()
-
-# Упорядочиваем дни недели
-weekday_order = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
 sales_by_weekday['weekday_name'] = pd.Categorical(
     sales_by_weekday['weekday_name'],
-    categories=weekday_order,
+    categories=weekday_names,
     ordered=True
 )
 sales_by_weekday = sales_by_weekday.sort_values('weekday_name')
 
-# Строим график
 fig_weekday = px.bar(
     sales_by_weekday,
     x='weekday_name',
@@ -167,6 +195,5 @@ fig_weekday = px.bar(
 )
 st.plotly_chart(fig_weekday)
 
-# Выводы
 top_day = sales_by_weekday.loc[sales_by_weekday['grosssalesamount'].idxmax()]
 st.write(f"Наиболее продуктивный день недели: **{top_day['weekday_name']}** (объем продаж: {top_day['grosssalesamount']:,.0f})")
