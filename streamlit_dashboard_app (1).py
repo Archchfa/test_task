@@ -71,35 +71,6 @@ fact_with_full_info['year'] = pd.to_datetime(fact_with_full_info['orderdate']).d
 # Исключаем 2020 год
 fact_with_full_info = fact_with_full_info[fact_with_full_info['year'] != 2020]
 
-# Новый график:круговая диаграмма с процентами продаж за выбранный год
-
-# Объединяем fact_with_full_info с таблицей staff для добавления employeename
-fact_with_employeename = pd.merge(fact_with_full_info, staff[['employeeid', 'employeename']], left_on='employee_id', right_on='employeeid', how='left')
-
-# Выбор года для анализа
-selected_year = st.selectbox("Выберите год для отображения процента продаж:", sorted(fact_with_employeename['year'].unique()))
-
-# Фильтруем данные по выбранному году
-fact_with_employeename_selected_year = fact_with_employeename[fact_with_employeename['year'] == selected_year]
-
-# Агрегируем данные по сотрудникам за выбранный год
-sales_by_employeename_selected_year = fact_with_employeename_selected_year.groupby('employeename')['grosssalesamount'].sum().reset_index()
-
-# Рассчитываем проценты для каждого сотрудника
-total_sales_selected_year = sales_by_employeename_selected_year['grosssalesamount'].sum()
-sales_by_employeename_selected_year['sales_percentage'] = (sales_by_employeename_selected_year['grosssalesamount'] / total_sales_selected_year) * 100
-
-# Круговая диаграмма для процента продаж каждого сотрудника
-fig_pie_employee_sales = px.pie(sales_by_employeename_selected_year, 
-                                names='employeename', 
-                                values='sales_percentage', 
-                                title=f"Процент продаж сотрудников за {selected_year}",
-                                labels={'sales_percentage': 'Процент продаж', 'employeename': 'Менеджер'})
-
-# Отображаем круговую диаграмму
-st.plotly_chart(fig_pie_employee_sales)
-
-
 # Заголовок страницы
 st.title("Тестовое задание")
 
@@ -275,3 +246,32 @@ fig_employee_sales = px.bar(sales_by_employee_year,
 
 # Отображаем график
 st.plotly_chart(fig_employee_sales)
+
+# Подзаголовок для графика с выбором года
+st.subheader("Распределение продаж между менеджерами по годам")
+
+# Объединяем fact_with_full_info с таблицей staff для добавления employeename
+fact_with_employeename = pd.merge(fact_with_full_info, staff[['employeeid', 'employeename']], left_on='employee_id', right_on='employeeid', how='left')
+
+# Выбор года для анализа
+selected_year = st.selectbox("Выберите год для отображения процента продаж:", sorted(fact_with_employeename['year'].unique()))
+
+# Фильтруем данные по выбранному году
+fact_with_employeename_selected_year = fact_with_employeename[fact_with_employeename['year'] == selected_year]
+
+# Агрегируем данные по сотрудникам за выбранный год
+sales_by_employeename_selected_year = fact_with_employeename_selected_year.groupby('employeename')['grosssalesamount'].sum().reset_index()
+
+# Рассчитываем проценты для каждого сотрудника
+total_sales_selected_year = sales_by_employeename_selected_year['grosssalesamount'].sum()
+sales_by_employeename_selected_year['sales_percentage'] = (sales_by_employeename_selected_year['grosssalesamount'] / total_sales_selected_year) * 100
+
+# Круговая диаграмма для процента продаж каждого сотрудника
+fig_pie_employee_sales = px.pie(sales_by_employeename_selected_year, 
+                                names='employeename', 
+                                values='sales_percentage', 
+                                title=f"Процент продаж сотрудников за {selected_year}",
+                                labels={'sales_percentage': 'Процент продаж', 'employeename': 'Менеджер'})
+
+# Отображаем круговую диаграмму
+st.plotly_chart(fig_pie_employee_sales)
