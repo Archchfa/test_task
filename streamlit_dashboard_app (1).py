@@ -41,8 +41,11 @@ sales_by_employeename_selected_year = fact_with_employeename_selected_year.group
 total_sales_selected_year = sales_by_employeename_selected_year['grosssalesamount'].sum()
 sales_by_employeename_selected_year['sales_percentage'] = (sales_by_employeename_selected_year['grosssalesamount'] / total_sales_selected_year) * 100
 
-# Круговая диаграмма для процента продаж каждого сотрудника
-fig_pie_employee_sales = px.pie(sales_by_employeename_selected_year, 
+# Новый набор данных для графиков: процент продаж сотрудников за выбранный год
+profit_by_employee_sales = sales_by_employeename_selected_year.copy()
+
+# Новый график: круговая диаграмма с процентами продаж за выбранный год
+fig_pie_employee_sales = px.pie(profit_by_employee_sales, 
                                 names='employeename', 
                                 values='sales_percentage', 
                                 title=f"Процент продаж сотрудников за {selected_year}",
