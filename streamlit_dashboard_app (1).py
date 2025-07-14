@@ -22,11 +22,74 @@ fact_with_category = pd.merge(fact_with_calendar, products[['productid', 'catego
 # Объединяем fact_with_category с таблицей cont для добавления информации о магазинах
 fact_with_full_info = pd.merge(fact_with_category, cont[['name', 'country']], on='name', how='left')
 
-# Объединяем fact_with_full_info с таблицей staff для добавления employeename
-fact_with_employeename = pd.merge(fact_with_full_info, staff[['employeeid', 'employeename']], left_on='employee_id', right_on='employeeid', how='left')
+# Фильтруем данные по категории "Женская обувь" и стране "Соединённые Штаты Америки" (для 1 и 2 графиков)
+filtered_data_us = fact_with_full_info[
+    (fact_with_full_info['categoryname'] == 'Женская обувь') & 
+    (fact_with_full_info['country'] == 'Соединённые Штаты Америки')
+]
+
+# Агрегируем прибыль по заказчикам для США
+profit_by_customer_us = filtered_data_us.groupby('name')['netsalesamount'].sum().reset_index()
+
+# Сумма всей прибыли в выбранной категории и стране для США
+total_profit_us = profit_by_customer_us['netsalesamount'].sum()
+
+# Рассчитываем процент прибыли для каждого магазина для США
+profit_by_customer_us['profit_percentage'] = (profit_by_customer_us['netsalesamount'] / total_profit_us) * 100
+
+# Сортируем по прибыли (чистая прибыль) для США
+profit_by_customer_us = profit_by_customer_us.sort_values(by='netsalesamount', ascending=False)
+
+
+# Для 3, 4 и 5 графиков: фильтруем данные для Бразилии (все магазины из Бразилии)
+filtered_data_br = fact_with_full_info[
+    (fact_with_full_info['country'] == 'Бразилия')
+]
+
+# Агрегируем прибыль по заказчикам для Бразилии
+profit_by_customer_br = filtered_data_br.groupby('name')['netsalesamount'].sum().reset_index()
+
+# Сумма всей прибыли в выбранной категории и стране для Бразилии
+total_profit_br = profit_by_customer_br['netsalesamount'].sum()
+
+# Рассчитываем процент прибыли для каждого магазина для Бразилии
+profit_by_customer_br['profit_percentage'] = (profit_by_customer_br['netsalesamount'] / total_profit_br) * 100
+
+# Сортируем по прибыли (чистая прибыль) для Бразилии
+profit_by_customer_br = profit_by_customer_br.sort_values(by='netsalesamount', ascending=False)
+
+# Кумулятивная прибыль для Бразилии
+profit_by_customer_br['cumulative_profit'] = profit_by_customer_br['netsalesamount'].cumsum()
+
+# Кумулятивный процент для Бразилии
+profit_by_customer_br['cumulative_percent'] = (profit_by_customer_br['cumulative_profit'] / total_profit_br) * 100
+
 
 # Добавляем год в данные
-fact_with_employeename['year'] = pd.to_datetime(fact_with_employeename['orderdate']).dt.year
+fact_with_full_info['year'] = pd.to_datetime(fact_with_full_info['orderdate']).dt.year
+
+# Исключаем 2020 год
+fact_with_full_info = fact_with_full_info[fact_with_full_info['year'] != 2020]
+
+# Группируем данные по employee_id и году, суммируем grosssalesamount
+sales_by_employee_year = fact_with_full_info.groupby(['employee_id', 'year'])['grosssalesamount'].sum().reset_index()
+
+# Столбчатая диаграмма: по горизонтали годы, по вертикали сумма grosssalesamount для каждого employee_id
+fig_employee_sales = px.bar(sales_by_employee_year, 
+                            x='year', 
+                            y='grosssalesamount', 
+                            color='employee_id',  # Цвета по employee_id
+                            title="Сумма Gross Sales по Employee_id по годам",
+                            labels={'grosssalesamount': 'Сумма grosssalesamount', 'year': 'Год', 'employee_id': 'Employee ID'})
+
+# Отображаем график
+st.plotly_chart(fig_employee_sales)
+
+
+# Новый график: круговая диаграмма с процентами продаж за выбранный год
+
+# Объединяем fact_with_full_info с таблицей staff для добавления employeename
+fact_with_employeename = pd.merge(fact_with_full_info, staff[['employeeid', 'employeename']], left_on='employee_id', right_on='employeeid', how='left')
 
 # Выбор года для анализа
 selected_year = st.selectbox("Выберите год для отображения процента продаж:", sorted(fact_with_employeename['year'].unique()))
@@ -48,13 +111,13 @@ fig_pie_employee_sales = px.pie(sales_by_employeename_selected_year,
                                 title=f"Процент продаж сотрудников за {selected_year}",
                                 labels={'sales_percentage': 'Процент продаж', 'employeename': 'Менеджер'})
 
-# Заголовок страницы
-st.title("Тестовое задание")
-
 # Отображаем круговую диаграмму
 st.plotly_chart(fig_pie_employee_sales)
 
-# Раздел для дополнительных графиков и анализов
+
+# Заголовок страницы
+st.title("Тестовое задание")
+
 # Подзаголовок для США
 st.subheader("Какие заказчики наиболее прибыльны в товарной категории «женская обувь» в США?")
 
