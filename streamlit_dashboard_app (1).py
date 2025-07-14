@@ -68,8 +68,8 @@ profit_by_customer_br['cumulative_percent'] = (profit_by_customer_br['cumulative
 # Добавляем год в данные
 fact_with_full_info['year'] = pd.to_datetime(fact_with_full_info['orderdate']).dt.year
 
-# Исключаем 2020 год
-fact_with_full_info = fact_with_full_info[fact_with_full_info['year'] != 2020]
+# Исключаем 2020 год только для фильтров в остальных графиках, для графиков менеджеров 2020 будет включен
+fact_with_full_info_no_2020 = fact_with_full_info[fact_with_full_info['year'] != 2020]
 
 # Объединяем данные с таблицей staff для получения имен менеджеров
 fact_with_full_info_with_names = pd.merge(
@@ -281,12 +281,12 @@ st.subheader("Распределение продаж между менедже�
 # Выбор года для анализа
 selected_year = st.selectbox(
     "Выберите год для отображения процента продаж:", 
-    sorted(fact_with_full_info_with_names['year'].unique())
+    sorted(fact_with_full_info['year'].unique())  # Включаем 2020 год
 )
 
 # Фильтруем данные по выбранному году
-fact_with_full_info_selected_year = fact_with_full_info_with_names[
-    fact_with_full_info_with_names['year'] == selected_year
+fact_with_full_info_selected_year = fact_with_full_info[
+    fact_with_full_info['year'] == selected_year
 ]
 
 # Агрегируем данные по сотрудникам за выбранный год
