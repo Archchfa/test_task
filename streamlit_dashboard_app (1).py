@@ -86,9 +86,7 @@ fig_employee_sales = px.bar(sales_by_employee_year,
 st.plotly_chart(fig_employee_sales)
 
 
-# Новый график:
-круго
-вая диаграмма с процентами продаж за выбранный год
+# Новый график:круговая диаграмма с процентами продаж за выбранный год
 
 # Объединяем fact_with_full_info с таблицей staff для добавления employeename
 fact_with_employeename = pd.merge(fact_with_full_info, staff[['employeeid', 'employeename']], left_on='employee_id', right_on='employeeid', how='left')
