@@ -67,22 +67,26 @@ profit_by_customer_br['cumulative_percent'] = (profit_by_customer_br['cumulative
 
 # Дополнение: График для суммы grosssalesamount по employee_id по годам
 
+# Объединяем таблицу fact_with_full_info с таблицей staff, чтобы добавить employeename
+fact_with_employeename = pd.merge(fact_with_full_info, staff[['employeeid', 'employeename']], left_on='employee_id', right_on='employeeid', how='left')
+
 # Добавляем год в данные
-fact_with_full_info['year'] = pd.to_datetime(fact_with_full_info['orderdate']).dt.year
+fact_with_employeename['year'] = pd.to_datetime(fact_with_employeename['orderdate']).dt.year
 
 # Исключаем 2020 год
-fact_with_full_info = fact_with_full_info[fact_with_full_info['year'] != 2020]
+fact_with_employeename = fact_with_employeename[fact_with_employeename['year'] != 2020]
 
-# Группируем данные по employee_id и году, суммируем grosssalesamount
-sales_by_employee_year = fact_with_full_info.groupby(['employee_id', 'year'])['grosssalesamount'].sum().reset_index()
+# Группируем данные по employeename и году, суммируем grosssalesamount
+sales_by_employeename_year = fact_with_employeename.groupby(['employeename', 'year'])['grosssalesamount'].sum().reset_index()
 
-# Столбчатая диаграмма: по горизонтали годы, по вертикали сумма grosssalesamount для каждого employee_id
-fig_employee_sales = px.bar(sales_by_employee_year, 
+# Столбчатая диаграмма: по горизонтали годы, по вертикали сумма grosssalesamount для каждого employeename
+fig_employee_sales = px.bar(sales_by_employeename_year, 
                             x='year', 
                             y='grosssalesamount', 
-                            color='employee_id',  # Цвета по employee_id
-                            title="Сумма Gross Sales по Employee_id по годам",
-                            labels={'grosssalesamount': 'Сумма grosssalesamount', 'year': 'Год', 'employee_id': 'Employee ID'})
+                            color='employeename',  # Цвета по employeename
+                            barmode='group',  # Столбцы рядом
+                            title="Сумма Gross Sales по Employee (по годам)",
+                            labels={'grosssalesamount': 'Сумма grosssalesamount', 'year': 'Год', 'employeename': 'Имя сотрудника'})
 
 # Отображаем график
 st.plotly_chart(fig_employee_sales)
@@ -246,3 +250,19 @@ fig7 = px.bar(orders_by_country_year,
               labels={'orderid': 'Количество заказов', 'year': 'Год', 'country': 'Страна'})
 
 st.plotly_chart(fig7)
+
+
+# В конец: График с наибольшими продажами по менеджерам
+st.subheader("Какой из менеджеров дает компании наибольший объем продаж?")
+
+# Столбчатая диаграмма с суммой grosssalesamount по сотрудникам
+fig_employee_sales = px.bar(sales_by_employeename_year, 
+                            x='year', 
+                            y='grosssalesamount', 
+                            color='employeename',  # Цвета по employeename
+                            barmode='group',  # Столбцы рядом
+                            title="Сумма Gross Sales по Employee (по годам)",
+                            labels={'grosssalesamount': 'Сумма grosssalesamount', 'year': 'Год', 'employeename': 'Имя сотрудника'})
+
+# Отображаем график
+st.plotly_chart(fig_employee_sales)
