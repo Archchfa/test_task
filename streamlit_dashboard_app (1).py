@@ -40,13 +40,14 @@ fact_with_employeename = pd.merge(
     how='left'
 )
 
-# Выбор года для анализа
+# График 10: Зависимость объема продаж от среднего размера скидки
+st.subheader("Зависимость объема продаж от среднего размера скидки")
+
+# Размещаем 2 столбца для графика и выбора года внизу
 col1, col2 = st.columns([3, 1])
 
 # График 10: Зависимость объема продаж от среднего размера скидки
 with col1:
-    st.subheader("Зависимость объема продаж от среднего размера скидки")
-
     # Выбор года для анализа
     selected_year = st.selectbox(
         "Выберите год для анализа менеджеров:",
@@ -135,6 +136,9 @@ with col1:
     # Отображаем график
     st.plotly_chart(fig_discount_analysis)
 
+# Подзаголовок для США
+st.subheader("Какие заказчики наиболее прибыльны в товарной категории «женская обувь» в США?")
+
 # График 1: Наиболее прибыльные магазины для США
 filtered_data_us = fact_with_full_info[
     (fact_with_full_info['categoryname'] == 'Женская обувь') & 
@@ -147,7 +151,6 @@ profit_by_customer_us['profit_percentage'] = (profit_by_customer_us['netsalesamo
 profit_by_customer_us = profit_by_customer_us.sort_values(by='netsalesamount', ascending=False)
 
 # График 2: Круговая диаграмма с процентом прибыли каждого магазина для США
-st.subheader("Какие заказчики наиболее прибыльны в товарной категории «женская обувь» в США?")
 col1, col2 = st.columns(2)
 
 # График 1: Наиболее прибыльные магазины для США
@@ -270,4 +273,3 @@ fig_pie = px.pie(manager_percent,
                 values='percentage',
                 title=f"Распределение продаж менеджеров за {selected_year} год")
 st.plotly_chart(fig_pie)
-
