@@ -43,6 +43,29 @@ profit_by_customer_us['profit_percentage'] = (profit_by_customer_us['netsalesamo
 # Сортируем по прибыли (чистая прибыль) для США
 profit_by_customer_us = profit_by_customer_us.sort_values(by='netsalesamount', ascending=False)
 
+# Для 3, 4 и 5 графиков: фильтруем данные для Бразилии (все магазины из Бразилии)
+filtered_data_br = fact_with_employeename[
+    (fact_with_employeename['country'] == 'Бразилия')
+]
+
+# Агрегируем прибыль по заказчикам для Бразилии
+profit_by_customer_br = filtered_data_br.groupby('name')['netsalesamount'].sum().reset_index()
+
+# Сумма всей прибыли в выбранной категории и стране для Бразилии
+total_profit_br = profit_by_customer_br['netsalesamount'].sum()
+
+# Рассчитываем процент прибыли для каждого магазина для Бразилии
+profit_by_customer_br['profit_percentage'] = (profit_by_customer_br['netsalesamount'] / total_profit_br) * 100
+
+# Сортируем по прибыли (чистая прибыль) для Бразилии
+profit_by_customer_br = profit_by_customer_br.sort_values(by='netsalesamount', ascending=False)
+
+# Кумулятивная прибыль для Бразилии
+profit_by_customer_br['cumulative_profit'] = profit_by_customer_br['netsalesamount'].cumsum()
+
+# Кумулятивный процент для Бразилии
+profit_by_customer_br['cumulative_percent'] = (profit_by_customer_br['cumulative_profit'] / total_profit_br) * 100
+
 # Добавляем год в данные
 fact_with_employeename['year'] = pd.to_datetime(fact_with_employeename['orderdate']).dt.year
 
