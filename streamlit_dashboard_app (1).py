@@ -23,30 +23,13 @@ fact_with_category = pd.merge(fact_with_calendar, products[['productid', 'catego
 fact_with_full_info = pd.merge(fact_with_category, cont[['name', 'country']], on='name', how='left')
 
 # Объединяем с таблицей сотрудников для добавления имени сотрудника
-fact_with_full_info = pd.merge(fact_with_full_info, staff[['employeeid', 'employeename']], left_on='employee_id', right_on='employeeid', how='left')
+fact_with_full_info = pd.merge(fact_with_full_info, staff[['employeeid', 'employeename']], on='employee_id', how='left')
 
 # Добавляем год в данные
 fact_with_full_info['year'] = pd.to_datetime(fact_with_full_info['orderdate']).dt.year
 
 # Исключаем 2020 год
 fact_with_full_info = fact_with_full_info[fact_with_full_info['year'] != 2020]
-
-# Фильтруем данные для США и агрегируем прибыль по заказчикам
-filtered_data_us = fact_with_full_info[
-    (fact_with_full_info['country'] == 'Соединённые Штаты Америки')
-]
-
-# Агрегируем прибыль по заказчикам для США
-profit_by_customer_us = filtered_data_us.groupby('name')['netsalesamount'].sum().reset_index()
-
-# Сумма всей прибыли в выбранной категории и стране для США
-total_profit_us = profit_by_customer_us['netsalesamount'].sum()
-
-# Рассчитываем процент прибыли для каждого магазина для США
-profit_by_customer_us['profit_percentage'] = (profit_by_customer_us['netsalesamount'] / total_profit_us) * 100
-
-# Сортируем по прибыли (чистая прибыль) для США
-profit_by_customer_us = profit_by_customer_us.sort_values(by='netsalesamount', ascending=False)
 
 # Группируем данные по employeename и году, суммируем grosssalesamount
 sales_by_employee_year = fact_with_full_info.groupby(['employeename', 'year'])['grosssalesamount'].sum().reset_index()
@@ -59,6 +42,10 @@ fig_employee_sales = px.bar(sales_by_employee_year,
                             barmode='group',  # Столбцы рядом
                             title="Сумма Gross Sales по Employee (по годам)",
                             labels={'grosssalesamount': 'Сумма grosssalesamount', 'year': 'Год', 'employeename': 'Имя сотрудника'})
+
+# Отображаем график
+st.plotly_chart(fig_employee_sales)
+
 
 # Заголовок страницы
 st.title("Тестовое задание")
@@ -218,19 +205,3 @@ fig7 = px.bar(orders_by_country_year,
               labels={'orderid': 'Количество заказов', 'year': 'Год', 'country': 'Страна'})
 
 st.plotly_chart(fig7)
-
-
-# В конец: График с наибольшими продажами по менеджерам
-st.subheader("Какой из менеджеров дает компании наибольший объем продаж?")
-
-# Столбчатая диаграмма с суммой grosssalesamount по сотрудникам
-fig_employee_sales = px.bar(sales_by_employee_year, 
-                            x='year', 
-                            y='grosssalesamount', 
-                            color='employeename',  # Цвета по employeename
-                            barmode='group',  # Столбцы рядом
-                            title="Сумма Gross Sales по Employee (по годам)",
-                            labels={'grosssalesamount': 'Сумма grosssalesamount', 'year': 'Год', 'employeename': 'Имя сотрудника'})
-
-# Отображаем график
-st.plotly_chart(fig_employee_sales)
