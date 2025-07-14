@@ -25,6 +25,24 @@ fact_with_full_info = pd.merge(fact_with_category, cont[['name', 'country']], on
 # Объединяем fact_with_full_info с таблицей staff для добавления employeename
 fact_with_employeename = pd.merge(fact_with_full_info, staff[['employeeid', 'employeename']], left_on='employee_id', right_on='employeeid', how='left')
 
+# Фильтруем данные по категории "Женская обувь" и стране "Соединённые Штаты Америки" (для 1 и 2 графиков)
+filtered_data_us = fact_with_employeename[
+    (fact_with_employeename['categoryname'] == 'Женская обувь') & 
+    (fact_with_employeename['country'] == 'Соединённые Штаты Америки')
+]
+
+# Агрегируем прибыль по заказчикам для США
+profit_by_customer_us = filtered_data_us.groupby('name')['netsalesamount'].sum().reset_index()
+
+# Сумма всей прибыли в выбранной категории и стране для США
+total_profit_us = profit_by_customer_us['netsalesamount'].sum()
+
+# Рассчитываем процент прибыли для каждого магазина для США
+profit_by_customer_us['profit_percentage'] = (profit_by_customer_us['netsalesamount'] / total_profit_us) * 100
+
+# Сортируем по прибыли (чистая прибыль) для США
+profit_by_customer_us = profit_by_customer_us.sort_values(by='netsalesamount', ascending=False)
+
 # Добавляем год в данные
 fact_with_employeename['year'] = pd.to_datetime(fact_with_employeename['orderdate']).dt.year
 
