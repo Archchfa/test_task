@@ -8,7 +8,8 @@ def load_data():
     staff_url = 'https://raw.githubusercontent.com/Archchfa/test_task/main/staff_v2.xlsx'
     calendar_url = 'https://raw.githubusercontent.com/Archchfa/test_task/main/calendar_v2.xlsx'
     cont_url = 'https://raw.githubusercontent.com/Archchfa/test_task/main/cont_v2.xlsx'
-    category_plan_url = 'План по категориям.xlsx'
+    category_plan_url = 'https://raw.githubusercontent.com/Archchfa/test_task/main/categpry_plan.xlsx'
+
     
     fact_with_calendar = pd.read_excel(fact_table_url)
     products = pd.read_excel(products_url)
