@@ -8,16 +8,29 @@ products_url = 'https://raw.githubusercontent.com/Archchfa/test_task/main/produc
 staff_url = 'https://raw.githubusercontent.com/Archchfa/test_task/main/staff_v2.xlsx'
 calendar_url = 'https://raw.githubusercontent.com/Archchfa/test_task/main/calendar_v2.xlsx'
 cont_url = 'https://raw.githubusercontent.com/Archchfa/test_task/main/cont_v2.xlsx'
-category_plan_url = 'https://raw.githubusercontent.com/Archchfa/test_task/main/categpry_plan.xlsx'
+category_plan_url = 'План по категориям.xlsx'  # Локальный файл
 
-fact_with_calendar = pd.read_excel(fact_table_url)
-products = pd.read_excel(products_url)
-staff = pd.read_excel(staff_url)
-calendar = pd.read_excel(calendar_url)
-cont = pd.read_excel(cont_url)
-category_plan = pd.read_excel(category_plan_url)
+# Загрузка всех данных
+@st.cache_data
+def load_data():
+    fact_with_calendar = pd.read_excel(fact_table_url)
+    products = pd.read_excel(products_url)
+    staff = pd.read_excel(staff_url)
+    calendar = pd.read_excel(calendar_url)
+    cont = pd.read_excel(cont_url)
+    category_plan = pd.read_excel(category_plan_url, sheet_name='Таблица')
+    return fact_with_calendar, products, staff, calendar, cont, category_plan
 
-# Подготовка данных
+fact_with_calendar, products, staff, calendar, cont, category_plan = load_data()
+
+# Получаем соответствие category_id и categoryname из таблицы products
+category_mapping = products[['categoryid', 'categoryname']].drop_duplicates()
+category_mapping = category_mapping.rename(columns={'categoryid': 'category_id'})
+
+# Объединяем с category_plan чтобы получить названия категорий
+category_plan = pd.merge(category_plan, category_mapping, on='category_id', how='left')
+
+# Подготовка данных для существующих графиков (без изменений)
 fact_with_category = pd.merge(fact_with_calendar, products[['productid', 'categoryname']], on='productid', how='left')
 fact_with_full_info = pd.merge(fact_with_category, cont[['name', 'country']], on='name', how='left')
 fact_with_full_info['year'] = pd.to_datetime(fact_with_full_info['orderdate']).dt.year
@@ -32,13 +45,26 @@ fact_with_employeename = pd.merge(
     how='left'
 )
 
-# Добавляем названия товаров к основным данным
 fact_with_products = pd.merge(
     fact_with_full_info,
     products[['productid', 'productname']],
     on='productid',
     how='left'
 )
+
+# Подготовка данных для ROI анализа
+category_plan['Date'] = pd.to_datetime(category_plan['Date'])
+category_plan['Year'] = category_plan['Date'].dt.year
+category_plan['ROI'] = (category_plan['Net_Plan'] / category_plan['Gross_Plan']) * 100
+
+# Настройка страницы
+st.set_page_config(layout="wide", page_title="Анализ продаж и ROI")
+
+# Заголовок
+st.title("📊 Комплексный анализ продаж и ROI")
+
+# Раздел 1: Существующие графики (полностью без изменений)
+st.header("1. Анализ продаж по заказчикам и странам")
 
 # 1. График для США - женская обувь
 st.subheader("Какие заказчики наиболее прибыльны в товарной категории «женская обувь» в США?")
@@ -58,12 +84,12 @@ with col1:
     fig1 = px.bar(profit_by_customer_us, x='name', y='netsalesamount',
                  title="Наиболее прибыльные магазины",
                  labels={'netsalesamount': 'Чистая прибыль', 'name': 'Заказчик'})
-    st.plotly_chart(fig1)
+    st.plotly_chart(fig1, use_container_width=True)
 
 with col2:
     fig2 = px.pie(profit_by_customer_us, names='name', values='profit_percentage',
                  title="Процент прибыли каждого магазина")
-    st.plotly_chart(fig2)
+    st.plotly_chart(fig2, use_container_width=True)
 
 # 2. График для Бразилии - 20% заказчиков
 st.subheader("Какие 20% заказчиков приносят 80% прибыли компании в Бразилии?")
@@ -80,18 +106,18 @@ col3, col4, col5 = st.columns(3)
 with col3:
     fig3 = px.line(profit_by_customer_br, x='name', y='cumulative_percent',
                   title="Кумулятивная прибыль заказчиков", markers=True)
-    st.plotly_chart(fig3)
+    st.plotly_chart(fig3, use_container_width=True)
 
 with col4:
     top_80 = profit_by_customer_br[profit_by_customer_br['cumulative_percent'] <= 80]
     fig4 = px.bar(top_80, x='name', y='netsalesamount',
                  title="Прибыль по заказчикам (80% прибыли)")
-    st.plotly_chart(fig4)
+    st.plotly_chart(fig4, use_container_width=True)
 
 with col5:
     fig5 = px.pie(profit_by_customer_br, names='name', values='profit_percentage',
                  title="Процент прибыли")
-    st.plotly_chart(fig5)
+    st.plotly_chart(fig5, use_container_width=True)
 
 # 3. График по странам
 st.subheader("Какие страны наиболее перспективны?")
@@ -106,13 +132,13 @@ else:
         lambda x: x / x.sum() * 100)
     fig6 = px.line(profit_by_country_year, x='year', y='profit_percentage', color='country',
                   title="Доля прибыли по странам")
-st.plotly_chart(fig6)
+st.plotly_chart(fig6, use_container_width=True)
 
 # 4. Количество заказов по странам и годам
 orders_by_country_year = fact_with_full_info.groupby(['country', 'year'])['orderid'].nunique().reset_index()
 fig7 = px.bar(orders_by_country_year, x='year', y='orderid', color='country',
-             title="")
-st.plotly_chart(fig7)
+             title="Количество заказов по странам и годам")
+st.plotly_chart(fig7, use_container_width=True)
 
 # 5. Анализ менеджеров
 st.subheader("Анализ продаж менеджеров (включая 2020 год)")
@@ -120,14 +146,13 @@ st.subheader("Анализ продаж менеджеров (включая 202
 manager_sales = fact_with_employeename.groupby(['employeename', 'year'])['grosssalesamount'].sum().reset_index()
 fig_manager = px.bar(manager_sales, x='year', y='grosssalesamount', color='employeename',
                     barmode='group', title="Продажи по менеджерам по годам")
-st.plotly_chart(fig_manager)
+st.plotly_chart(fig_manager, use_container_width=True)
 
 selected_year = st.selectbox(
     "Выберите год для анализа менеджеров:",
     sorted(fact_with_employeename['year'].unique())
 )
 
-# Размещаем графики pie и discount на одном уровне
 col_pie, col_discount = st.columns(2)
 
 with col_pie:
@@ -136,10 +161,9 @@ with col_pie:
     manager_percent['percentage'] = manager_percent['grosssalesamount'] / manager_percent['grosssalesamount'].sum() * 100
     fig_pie = px.pie(manager_percent, names='employeename', values='percentage',
                     title=f"Распределение продаж менеджеров за {selected_year} год")
-    st.plotly_chart(fig_pie)
+    st.plotly_chart(fig_pie, use_container_width=True)
 
 with col_discount:
-    # График зависимости объема продаж от скидки
     year_data = fact_with_employeename[fact_with_employeename['year'] == selected_year]
     manager_stats = year_data.groupby('employeename').agg(
         total_sales=('grosssalesamount', 'sum'),
@@ -162,7 +186,6 @@ with col_discount:
         }
     )
     
-    # Добавляем медианные линии
     median_discount = manager_stats['avg_discount'].median()
     median_sales = manager_stats['total_sales'].median()
     
@@ -174,7 +197,7 @@ with col_discount:
                  y1=median_sales, line=dict(color='red', dash='dash'))
         ]
     )
-    st.plotly_chart(fig_discount)
+    st.plotly_chart(fig_discount, use_container_width=True)
 
 # 6. График дней недели для новорожденных
 st.subheader("Какие дни недели наиболее продуктивны для продаж товарной категории «Одежда для новорожденных»?")
@@ -203,7 +226,7 @@ fig_weekday = px.bar(
     title='Продажи одежды для новорожденных по дням недели (2019-2020)',
     labels={'weekday_name': 'День недели', 'grosssalesamount': 'Объем продаж'}
 )
-st.plotly_chart(fig_weekday)
+st.plotly_chart(fig_weekday, use_container_width=True)
 
 top_day = sales_by_weekday.loc[sales_by_weekday['grosssalesamount'].idxmax()]
 st.write(f"Наиболее продуктивный день недели: **{top_day['weekday_name']}** (объем продаж: {top_day['grosssalesamount']:,.0f})")
@@ -212,13 +235,11 @@ st.write(f"Наиболее продуктивный день недели: **{t
 st.header("Анализ товара «Костюм для бега»")
 
 try:
-    # Фильтруем данные по товару
     running_suit_data = fact_with_products[fact_with_products['productname'] == 'Костюм для бега']
     
     if running_suit_data.empty:
         st.warning("Товар 'Костюм для бега' не найден в данных")
     else:
-        # Анализ динамики прибыли по годам
         yearly_profit = running_suit_data.groupby('year')['netsalesamount'].sum().reset_index()
         
         col_run1, col_run2 = st.columns(2)
@@ -239,7 +260,6 @@ try:
             st.plotly_chart(fig_run1, use_container_width=True)
         
         with col_run2:
-            # Анализ по месяцам для последнего года
             last_year = yearly_profit['year'].max()
             monthly_data = running_suit_data[running_suit_data['year'] == last_year].copy()
             monthly_data['month'] = pd.to_datetime(monthly_data['orderdate']).dt.month
@@ -255,15 +275,12 @@ try:
             )
             st.plotly_chart(fig_run2, use_container_width=True)
         
-        # Анализ рентабельности
         running_suit_data['profit_margin'] = (running_suit_data['netsalesamount'] / running_suit_data['grosssalesamount']) * 100
         avg_margin = running_suit_data['profit_margin'].mean()
         
-        # Сравнение с другими товарами
         all_products_profit = fact_with_products.groupby('productname')['netsalesamount'].sum().reset_index()
         product_rank = (all_products_profit['netsalesamount'] > running_suit_data['netsalesamount'].sum()).mean() * 100
         
-        # Вывод рекомендации
         st.subheader("Рекомендация по ассортименту")
         
         if len(yearly_profit) > 1 and yearly_profit['netsalesamount'].iloc[-1] < yearly_profit['netsalesamount'].mean():
@@ -278,7 +295,6 @@ try:
         st.write(f"- Товар прибыльнее, чем {100 - product_rank:.1f}% других товаров")
         st.write(f"- Общая прибыль за весь период: {running_suit_data['netsalesamount'].sum():,.0f}")
         
-        # Анализ по странам
         if 'country' in running_suit_data.columns:
             country_profit = running_suit_data.groupby('country')['netsalesamount'].sum().reset_index()
             fig_run3 = px.pie(
@@ -294,141 +310,124 @@ except Exception as e:
     st.error(f"Произошла ошибка при анализе товара: {str(e)}")
     st.write("Проверьте наличие столбцов в данных:", list(fact_with_products.columns))
 
-# Преобразование данных
-category_plan['Date'] = pd.to_datetime(category_plan['Date'])
-category_plan['Year'] = category_plan['Date'].dt.year
+# 8. Новый раздел: Анализ ROI из category_plan с названиями категорий из products
+st.header("📈 Анализ ROI (Return on Investment)")
 
-# Расчет ROI
-category_plan['ROI'] = (category_plan['Net_Plan'] / category_plan['Gross_Plan']) * 100
+# Визуализация ROI
+st.subheader("Динамика ROI по годам и категориям")
 
-# Основной заголовок
-st.title('Анализ ROI по категориям и годам')
-
-# 1. Общая динамика ROI по годам
-st.header('1. Динамика ROI по годам')
-
-# Группировка по годам
-yearly_roi = category_plan.groupby('Year')['ROI'].mean().reset_index()
-
-fig1 = px.line(
-    yearly_roi,
-    x='Year',
-    y='ROI',
-    title='Средний ROI по годам',
-    markers=True
-)
-fig1.add_hline(
-    y=yearly_roi['ROI'].mean(),
-    line_dash="dash",
-    annotation_text=f"Средний ROI: {yearly_roi['ROI'].mean():.1f}%",
-    line_color="red"
-)
-st.plotly_chart(fig1)
-
-# 2. ROI по категориям
-st.header('2. Анализ ROI по категориям')
-
-# Выбор категорий для анализа
-selected_categories = st.multiselect(
-    'Выберите категории:',
-    options=category_plan['category_id'].unique(),
-    default=category_plan['category_id'].unique()[:3]
+# Выбор категорий для отображения
+selected_categories_roi = st.multiselect(
+    "Выберите категории для анализа ROI:",
+    options=category_plan['categoryname'].dropna().unique(),
+    default=category_plan['categoryname'].dropna().unique()[:3],
+    key='roi_categories'
 )
 
 # Фильтрация данных
-filtered_data = category_plan[category_plan['category_id'].isin(selected_categories)]
+roi_filtered = category_plan[category_plan['categoryname'].isin(selected_categories_roi)]
+roi_by_year = roi_filtered.groupby(['Year', 'categoryname'])['ROI'].mean().reset_index()
 
-# Группировка по году и категории
-category_year_roi = filtered_data.groupby(['Year', 'category_id'])['ROI'].mean().reset_index()
-
-# График ROI по категориям
-fig2 = px.line(
-    category_year_roi,
+# График ROI
+fig_roi = px.line(
+    roi_by_year,
     x='Year',
     y='ROI',
-    color='category_id',
+    color='categoryname',
     title='Динамика ROI по категориям',
-    labels={'category_id': 'Категория', 'ROI': 'ROI (%)'},
-    markers=True
+    labels={'Year': 'Год', 'ROI': 'ROI (%)', 'categoryname': 'Категория'},
+    markers=True,
+    line_shape="spline"
 )
-st.plotly_chart(fig2)
+fig_roi.update_layout(hovermode="x unified")
+st.plotly_chart(fig_roi, use_container_width=True)
 
-# 3. Сравнение категорий
-st.header('3. Сравнение категорий')
+# Анализ эффективности инвестиций
+st.subheader("Эффективность инвестиций по категориям")
 
-# Топ-5 категорий по среднему ROI
-top_categories = category_plan.groupby('category_id')['ROI'].mean().nlargest(5).reset_index()
-
-fig3 = px.bar(
-    top_categories,
-    x='category_id',
-    y='ROI',
-    color='ROI',
-    title='Топ-5 категорий по ROI',
-    labels={'category_id': 'Категория', 'ROI': 'Средний ROI (%)'}
-)
-st.plotly_chart(fig3)
-
-# 4. Детальный анализ по годам и категориям
-st.header('4. Детальный анализ')
-
-# Выбор года для детального анализа
-selected_year = st.selectbox(
-    'Выберите год для детального анализа:',
-    options=sorted(category_plan['Year'].unique())
-)
-
-year_data = category_plan[category_plan['Year'] == selected_year]
-
-# График распределения ROI по категориям для выбранного года
-fig4 = px.box(
-    year_data,
-    x='category_id',
-    y='ROI',
-    title=f'Распределение ROI по категориям за {selected_year} год',
-    labels={'category_id': 'Категория', 'ROI': 'ROI (%)'}
-)
-st.plotly_chart(fig4)
-
-# 5. Анализ эффективности инвестиций
-st.header('5. Анализ эффективности инвестиций')
-
-# Расчет общего объема инвестиций и возврата по категориям
-investment_analysis = category_plan.groupby('category_id').agg(
+investment_analysis = category_plan.groupby('categoryname').agg(
     total_investment=('Gross_Plan', 'sum'),
     total_return=('Net_Plan', 'sum'),
     avg_roi=('ROI', 'mean')
-).reset_index()
+).reset_index().sort_values('avg_roi', ascending=False)
 
-# График инвестиций vs возврата
-fig5 = px.scatter(
+col_roi1, col_roi2 = st.columns(2)
+
+with col_roi1:
+    fig_invest = px.bar(
+        investment_analysis,
+        x='categoryname',
+        y='total_investment',
+        title='Общий объем инвестиций по категориям',
+        labels={'categoryname': 'Категория', 'total_investment': 'Инвестиции'},
+        color='avg_roi',
+        color_continuous_scale='Bluered'
+    )
+    st.plotly_chart(fig_invest, use_container_width=True)
+
+with col_roi2:
+    fig_return = px.bar(
+        investment_analysis,
+        x='categoryname',
+        y='total_return',
+        title='Общий возврат по категориям',
+        labels={'categoryname': 'Категория', 'total_return': 'Возврат'},
+        color='avg_roi',
+        color_continuous_scale='Bluered'
+    )
+    st.plotly_chart(fig_return, use_container_width=True)
+
+# Пузырьковая диаграмма ROI
+st.subheader("Соотношение инвестиций и возврата")
+
+fig_bubble = px.scatter(
     investment_analysis,
     x='total_investment',
     y='total_return',
     size='avg_roi',
-    color='category_id',
-    hover_name='category_id',
-    title='Соотношение инвестиций и возврата по категориям',
+    color='categoryname',
+    hover_name='categoryname',
+    title='Эффективность инвестиций по категориям (размер пузырька = ROI)',
     labels={
         'total_investment': 'Общий объем инвестиций',
         'total_return': 'Общий возврат',
-        'avg_roi': 'Средний ROI',
-        'category_id': 'Категория'
-    }
+        'avg_roi': 'Средний ROI (%)',
+        'categoryname': 'Категория'
+    },
+    log_x=True,
+    size_max=40
 )
-st.plotly_chart(fig5)
+st.plotly_chart(fig_bubble, use_container_width=True)
 
-# Вывод ключевых метрик
-st.subheader('Ключевые метрики:')
-col1, col2, col3 = st.columns(3)
-with col1:
-    st.metric("Средний ROI по всем данным", f"{category_plan['ROI'].mean():.1f}%")
-with col2:
-    st.metric("Максимальный ROI", f"{category_plan['ROI'].max():.1f}%")
-with col3:
-    st.metric("Минимальный ROI", f"{category_plan['ROI'].min():.1f}%")
+# Ключевые метрики ROI
+st.subheader("Ключевые метрики ROI")
+roi_col1, roi_col2, roi_col3 = st.columns(3)
 
-# Таблица с данными
-if st.checkbox('Показать исходные данные'):
-    st.subheader('Исходные данные')
-    st.dataframe(category_plan)
+with roi_col1:
+    max_roi = category_plan['ROI'].max()
+    st.metric("Максимальный ROI", f"{max_roi:.1f}%", 
+              f"Категория: {category_plan.loc[category_plan['ROI'].idxmax(), 'categoryname']}")
+
+with roi_col2:
+    min_roi = category_plan['ROI'].min()
+    st.metric("Минимальный ROI", f"{min_roi:.1f}%", 
+              f"Категория: {category_plan.loc[category_plan['ROI'].idxmin(), 'categoryname']}")
+
+with roi_col3:
+    mean_roi = category_plan['ROI'].mean()
+    st.metric("Средний ROI", f"{mean_roi:.1f}%")
+
+# Топ категорий по ROI
+st.subheader("Топ категорий по ROI")
+top_categories = investment_analysis.nlargest(5, 'avg_roi')
+st.dataframe(top_categories[['categoryname', 'avg_roi', 'total_investment', 'total_return']]
+             .rename(columns={
+                 'categoryname': 'Категория',
+                 'avg_roi': 'Средний ROI (%)',
+                 'total_investment': 'Общие инвестиции',
+                 'total_return': 'Общий возврат'
+             }).style.format({
+                 'Средний ROI (%)': '{:.1f}%',
+                 'Общие инвестиции': '{:,.0f}',
+                 'Общий возврат': '{:,.0f}'
+             }), height=250)
