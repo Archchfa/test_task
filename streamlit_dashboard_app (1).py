@@ -73,11 +73,11 @@ fact_with_employeename = pd.merge(fact_with_full_info, staff[['employeeid', 'emp
 # Добавляем год в данные
 fact_with_employeename['year'] = pd.to_datetime(fact_with_employeename['orderdate']).dt.year
 
-# Исключаем 2020 год из основного анализа, но используем его для графика ниже
-fact_with_employeename_2020 = fact_with_employeename[fact_with_employeename['year'] == 2020]
+# Исключаем 2020 год
+fact_with_employeename = fact_with_employeename[fact_with_employeename['year'] != 2020]
 
 # Группируем данные по employeename и году, суммируем grosssalesamount
-sales_by_employeename_year = fact_with_employeename_2020.groupby(['employeename', 'year'])['grosssalesamount'].sum().reset_index()
+sales_by_employeename_year = fact_with_employeename.groupby(['employeename', 'year'])['grosssalesamount'].sum().reset_index()
 
 # Столбчатая диаграмма: по горизонтали годы, по вертикали сумма grosssalesamount для каждого employeename
 fig_employee_sales = px.bar(sales_by_employeename_year, 
@@ -85,28 +85,12 @@ fig_employee_sales = px.bar(sales_by_employeename_year,
                             y='grosssalesamount', 
                             color='employeename',  # Цвета по employeename
                             barmode='group',  # Столбцы рядом
-                            title="Сумма Gross Sales по Employee (по 2020 году)",
+                            title="Сумма Gross Sales по Employee (по годам)",
                             labels={'grosssalesamount': 'Сумма grosssalesamount', 'year': 'Год', 'employeename': 'Имя сотрудника'})
 
-# Круговая диаграмма с процентом за выбранный год
-selected_year = st.selectbox("Выберите год для отображения процента продаж:", [2020, 2019, 2018])
+# Отображаем график
+st.plotly_chart(fig_employee_sales)
 
-# Фильтруем данные по выбранному году
-fact_with_employeename_selected_year = fact_with_employeename[fact_with_employeename['year'] == selected_year]
-
-# Агрегируем данные по сотрудникам за выбранный год
-sales_by_employeename_selected_year = fact_with_employeename_selected_year.groupby('employeename')['grosssalesamount'].sum().reset_index()
-
-# Рассчитываем проценты
-total_sales_selected_year = sales_by_employeename_selected_year['grosssalesamount'].sum()
-sales_by_employeename_selected_year['sales_percentage'] = (sales_by_employeename_selected_year['grosssalesamount'] / total_sales_selected_year) * 100
-
-# Круговая диаграмма
-fig_pie_employee_sales = px.pie(sales_by_employeename_selected_year, 
-                                names='employeename', 
-                                values='sales_percentage', 
-                                title=f"Процент продаж по менеджерам за {selected_year}",
-                                labels={'sales_percentage': 'Процент продаж', 'employeename': 'Менеджер'})
 
 # Заголовок страницы
 st.title("Тестовое задание")
@@ -277,11 +261,8 @@ fig_employee_sales = px.bar(sales_by_employeename_year,
                             y='grosssalesamount', 
                             color='employeename',  # Цвета по employeename
                             barmode='group',  # Столбцы рядом
-                            title="Сумма Gross Sales по Employee (по 2020 году)",
+                            title="Сумма Gross Sales по Employee (по годам)",
                             labels={'grosssalesamount': 'Сумма grosssalesamount', 'year': 'Год', 'employeename': 'Имя сотрудника'})
 
 # Отображаем график
 st.plotly_chart(fig_employee_sales)
-
-# Круговая диаграмма для процента за выбранный год
-st.plotly_chart(fig_pie_employee_sales)
