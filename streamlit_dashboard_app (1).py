@@ -23,7 +23,7 @@ fact_with_category = pd.merge(fact_with_calendar, products[['productid', 'catego
 fact_with_full_info = pd.merge(fact_with_category, cont[['name', 'country']], on='name', how='left')
 
 # Объединяем с таблицей сотрудников для добавления имени сотрудника
-fact_with_full_info = pd.merge(fact_with_full_info, staff[['employeeid', 'employeename']], on='employee_id', how='left')
+fact_with_full_info = pd.merge(fact_with_full_info, staff[['employeeid', 'employeename']], left_on='employee_id', right_on='employeeid', how='left')
 
 # Добавляем год в данные
 fact_with_full_info['year'] = pd.to_datetime(fact_with_full_info['orderdate']).dt.year
