@@ -8,12 +8,14 @@ products_url = 'https://raw.githubusercontent.com/Archchfa/test_task/main/produc
 staff_url = 'https://raw.githubusercontent.com/Archchfa/test_task/main/staff_v2.xlsx'
 calendar_url = 'https://raw.githubusercontent.com/Archchfa/test_task/main/calendar_v2.xlsx'
 cont_url = 'https://raw.githubusercontent.com/Archchfa/test_task/main/cont_v2.xlsx'
+category_plan_url = 'https://raw.githubusercontent.com/Archchfa/test_task/main/categpry_plan.xlsx'
 
 fact_with_calendar = pd.read_excel(fact_table_url)
 products = pd.read_excel(products_url)
 staff = pd.read_excel(staff_url)
 calendar = pd.read_excel(calendar_url)
 cont = pd.read_excel(cont_url)
+category_plan = pd.read_excel(category_plan_url)
 
 # Подготовка данных
 fact_with_category = pd.merge(fact_with_calendar, products[['productid', 'categoryname']], on='productid', how='left')
@@ -291,3 +293,142 @@ try:
 except Exception as e:
     st.error(f"Произошла ошибка при анализе товара: {str(e)}")
     st.write("Проверьте наличие столбцов в данных:", list(fact_with_products.columns))
+
+# Преобразование данных
+category_plan['Date'] = pd.to_datetime(category_plan['Date'])
+category_plan['Year'] = category_plan['Date'].dt.year
+
+# Расчет ROI
+category_plan['ROI'] = (category_plan['Net_Plan'] / category_plan['Gross_Plan']) * 100
+
+# Основной заголовок
+st.title('Анализ ROI по категориям и годам')
+
+# 1. Общая динамика ROI по годам
+st.header('1. Динамика ROI по годам')
+
+# Группировка по годам
+yearly_roi = category_plan.groupby('Year')['ROI'].mean().reset_index()
+
+fig1 = px.line(
+    yearly_roi,
+    x='Year',
+    y='ROI',
+    title='Средний ROI по годам',
+    markers=True
+)
+fig1.add_hline(
+    y=yearly_roi['ROI'].mean(),
+    line_dash="dash",
+    annotation_text=f"Средний ROI: {yearly_roi['ROI'].mean():.1f}%",
+    line_color="red"
+)
+st.plotly_chart(fig1)
+
+# 2. ROI по категориям
+st.header('2. Анализ ROI по категориям')
+
+# Выбор категорий для анализа
+selected_categories = st.multiselect(
+    'Выберите категории:',
+    options=category_plan['category_id'].unique(),
+    default=category_plan['category_id'].unique()[:3]
+)
+
+# Фильтрация данных
+filtered_data = category_plan[category_plan['category_id'].isin(selected_categories)]
+
+# Группировка по году и категории
+category_year_roi = filtered_data.groupby(['Year', 'category_id'])['ROI'].mean().reset_index()
+
+# График ROI по категориям
+fig2 = px.line(
+    category_year_roi,
+    x='Year',
+    y='ROI',
+    color='category_id',
+    title='Динамика ROI по категориям',
+    labels={'category_id': 'Категория', 'ROI': 'ROI (%)'},
+    markers=True
+)
+st.plotly_chart(fig2)
+
+# 3. Сравнение категорий
+st.header('3. Сравнение категорий')
+
+# Топ-5 категорий по среднему ROI
+top_categories = category_plan.groupby('category_id')['ROI'].mean().nlargest(5).reset_index()
+
+fig3 = px.bar(
+    top_categories,
+    x='category_id',
+    y='ROI',
+    color='ROI',
+    title='Топ-5 категорий по ROI',
+    labels={'category_id': 'Категория', 'ROI': 'Средний ROI (%)'}
+)
+st.plotly_chart(fig3)
+
+# 4. Детальный анализ по годам и категориям
+st.header('4. Детальный анализ')
+
+# Выбор года для детального анализа
+selected_year = st.selectbox(
+    'Выберите год для детального анализа:',
+    options=sorted(category_plan['Year'].unique())
+)
+
+year_data = category_plan[category_plan['Year'] == selected_year]
+
+# График распределения ROI по категориям для выбранного года
+fig4 = px.box(
+    year_data,
+    x='category_id',
+    y='ROI',
+    title=f'Распределение ROI по категориям за {selected_year} год',
+    labels={'category_id': 'Категория', 'ROI': 'ROI (%)'}
+)
+st.plotly_chart(fig4)
+
+# 5. Анализ эффективности инвестиций
+st.header('5. Анализ эффективности инвестиций')
+
+# Расчет общего объема инвестиций и возврата по категориям
+investment_analysis = category_plan.groupby('category_id').agg(
+    total_investment=('Gross_Plan', 'sum'),
+    total_return=('Net_Plan', 'sum'),
+    avg_roi=('ROI', 'mean')
+).reset_index()
+
+# График инвестиций vs возврата
+fig5 = px.scatter(
+    investment_analysis,
+    x='total_investment',
+    y='total_return',
+    size='avg_roi',
+    color='category_id',
+    hover_name='category_id',
+    title='Соотношение инвестиций и возврата по категориям',
+    labels={
+        'total_investment': 'Общий объем инвестиций',
+        'total_return': 'Общий возврат',
+        'avg_roi': 'Средний ROI',
+        'category_id': 'Категория'
+    }
+)
+st.plotly_chart(fig5)
+
+# Вывод ключевых метрик
+st.subheader('Ключевые метрики:')
+col1, col2, col3 = st.columns(3)
+with col1:
+    st.metric("Средний ROI по всем данным", f"{category_plan['ROI'].mean():.1f}%")
+with col2:
+    st.metric("Максимальный ROI", f"{category_plan['ROI'].max():.1f}%")
+with col3:
+    st.metric("Минимальный ROI", f"{category_plan['ROI'].min():.1f}%")
+
+# Таблица с данными
+if st.checkbox('Показать исходные данные'):
+    st.subheader('Исходные данные')
+    st.dataframe(category_plan)
