@@ -318,88 +318,103 @@ try:
        - {country_stats_beach.sort_values('total_profit', ascending=False).iloc[1]['country']} ({country_stats_beach.sort_values('total_profit', ascending=False).iloc[1]['total_profit']:,.0f})
     """)
 
+# [Весь предыдущий код остается без изменений до этого места]
+
+# 7. Анализ товаров категории "Пляжная одежда"
+# [Код из предыдущего раздела остается без изменений]
+
 # 8. Анализ товара "Костюм для бега"
-st.header("Анализ товара «Костюм для бега»")
-
-# Проверяем наличие товара в данных
-running_suit_data = fact_with_full_info[fact_with_full_info['productname'] == 'Костюм для бега']
-
-if running_suit_data.empty:
-    st.warning("Товар 'Костюм для бега' не найден в данных")
-else:
-    # Анализ динамики прибыли по годам
-    yearly_profit = running_suit_data.groupby('year')['netsalesamount'].sum().reset_index()
+try:
+    st.header("Анализ товара «Костюм для бега»")
     
-    # Графики в одной строке
-    col_run1, col_run2 = st.columns(2)
+    # Добавляем названия товаров к основным данным
+    fact_with_products = pd.merge(
+        fact_with_full_info,
+        products[['productid', 'productname']],
+        on='productid',
+        how='left'
+    )
     
-    with col_run1:
-        fig_run1 = px.line(
-            yearly_profit,
-            x='year',
-            y='netsalesamount',
-            title='Динамика прибыли по годам',
-            labels={'year': 'Год', 'netsalesamount': 'Прибыль'},
-            markers=True
-        )
-        fig_run1.add_hline(y=yearly_profit['netsalesamount'].mean(), 
-                          line_dash="dash",
-                          annotation_text="Средняя прибыль",
-                          line_color="red")
-        st.plotly_chart(fig_run1, use_container_width=True)
+    # Фильтруем данные по товару
+    running_suit_data = fact_with_products[fact_with_products['productname'] == 'Костюм для бега']
     
-    with col_run2:
-        # Анализ по месяцам (для последнего года)
-        last_year = yearly_profit['year'].max()
-        monthly_data = running_suit_data[running_suit_data['year'] == last_year].copy()
-        monthly_data['month'] = pd.to_datetime(monthly_data['orderdate']).dt.month
-        monthly_profit = monthly_data.groupby('month')['netsalesamount'].sum().reset_index()
-        
-        fig_run2 = px.bar(
-            monthly_profit,
-            x='month',
-            y='netsalesamount',
-            title=f'Прибыль по месяцам ({last_year} год)',
-            labels={'month': 'Месяц', 'netsalesamount': 'Прибыль'},
-            color='netsalesamount'
-        )
-        st.plotly_chart(fig_run2, use_container_width=True)
-    
-    # Анализ рентабельности
-    running_suit_data['profit_margin'] = (running_suit_data['netsalesamount'] / running_suit_data['grosssalesamount']) * 100
-    avg_margin = running_suit_data['profit_margin'].mean()
-    
-    # Сравнение с другими товарами
-    all_products_profit = fact_with_full_info.groupby('productname')['netsalesamount'].sum().reset_index()
-    percentile = (all_products_profit['netsalesamount'] < running_suit_data['netsalesamount'].sum()).mean() * 100
-    
-    # Вывод рекомендации
-    st.subheader("Рекомендация по ассортименту")
-    
-    if yearly_profit['netsalesamount'].iloc[-1] < yearly_profit['netsalesamount'].mean():
-        st.error("**Рекомендация:** Рассмотреть возможность вывода товара из ассортимента")
-        st.write(f"- Прибыль за последний год ниже среднего значения ({yearly_profit['netsalesamount'].mean():,.0f} vs {yearly_profit['netsalesamount'].iloc[-1]:,.0f})")
+    if running_suit_data.empty:
+        st.warning("Товар 'Костюм для бега' не найден в данных")
     else:
-        st.success("**Рекомендация:** Сохранить товар в ассортименте")
-        st.write(f"- Прибыль за последний год выше среднего значения ({yearly_profit['netsalesamount'].mean():,.0f} vs {yearly_profit['netsalesamount'].iloc[-1]:,.0f})")
-    
-    st.write("**Дополнительные метрики:**")
-    st.write(f"- Средняя рентабельность: {avg_margin:.1f}%")
-    st.write(f"- Товар прибыльнее, чем {percentile:.1f}% других товаров")
-    st.write(f"- Общая прибыль за весь период: {running_suit_data['netsalesamount'].sum():,.0f}")
-    
-    # Анализ по странам
-    country_profit = running_suit_data.groupby('country')['netsalesamount'].sum().reset_index()
-    if not country_profit.empty:
-        fig_run3 = px.pie(
-            country_profit,
-            names='country',
-            values='netsalesamount',
-            title='Распределение прибыли по странам',
-            hole=0.3
-        )
-        st.plotly_chart(fig_run3, use_container_width=True)
+        # Анализ динамики прибыли по годам
+        yearly_profit = running_suit_data.groupby('year')['netsalesamount'].sum().reset_index()
+        
+        col_run1, col_run2 = st.columns(2)
+        
+        with col_run1:
+            fig_run1 = px.line(
+                yearly_profit,
+                x='year',
+                y='netsalesamount',
+                title='Динамика прибыли по годам',
+                labels={'year': 'Год', 'netsalesamount': 'Прибыль'},
+                markers=True
+            )
+            fig_run1.add_hline(y=yearly_profit['netsalesamount'].mean(), 
+                             line_dash="dash",
+                             annotation_text="Средняя прибыль",
+                             line_color="red")
+            st.plotly_chart(fig_run1, use_container_width=True)
+        
+        with col_run2:
+            # Анализ по месяцам для последнего года
+            last_year = yearly_profit['year'].max()
+            monthly_data = running_suit_data[running_suit_data['year'] == last_year].copy()
+            monthly_data['month'] = pd.to_datetime(monthly_data['orderdate']).dt.month
+            monthly_profit = monthly_data.groupby('month')['netsalesamount'].sum().reset_index()
+            
+            fig_run2 = px.bar(
+                monthly_profit,
+                x='month',
+                y='netsalesamount',
+                title=f'Прибыль по месяцам ({last_year} год)',
+                labels={'month': 'Месяц', 'netsalesamount': 'Прибыль'},
+                color='netsalesamount'
+            )
+            st.plotly_chart(fig_run2, use_container_width=True)
+        
+        # Анализ рентабельности
+        running_suit_data['profit_margin'] = (running_suit_data['netsalesamount'] / running_suit_data['grosssalesamount']) * 100
+        avg_margin = running_suit_data['profit_margin'].mean()
+        
+        # Сравнение с другими товарами
+        all_products_profit = fact_with_products.groupby('productname')['netsalesamount'].sum().reset_index()
+        product_rank = (all_products_profit['netsalesamount'] > running_suit_data['netsalesamount'].sum()).mean() * 100
+        
+        # Вывод рекомендации
+        st.subheader("Рекомендация по ассортименту")
+        
+        if len(yearly_profit) > 1 and yearly_profit['netsalesamount'].iloc[-1] < yearly_profit['netsalesamount'].mean():
+            st.error("**Рекомендация:** Рассмотреть возможность вывода товара из ассортимента")
+            st.write(f"- Прибыль за последний год ниже среднего значения ({yearly_profit['netsalesamount'].mean():,.0f} vs {yearly_profit['netsalesamount'].iloc[-1]:,.0f})")
+        else:
+            st.success("**Рекомендация:** Сохранить товар в ассортименте")
+            st.write(f"- Прибыль за последний год выше среднего значения ({yearly_profit['netsalesamount'].mean():,.0f} vs {yearly_profit['netsalesamount'].iloc[-1]:,.0f})")
+        
+        st.write("**Ключевые метрики:**")
+        st.write(f"- Средняя рентабельность: {avg_margin:.1f}%")
+        st.write(f"- Товар прибыльнее, чем {100 - product_rank:.1f}% других товаров")
+        st.write(f"- Общая прибыль за весь период: {running_suit_data['netsalesamount'].sum():,.0f}")
+        
+        # Анализ по странам
+        if 'country' in running_suit_data.columns:
+            country_profit = running_suit_data.groupby('country')['netsalesamount'].sum().reset_index()
+            fig_run3 = px.pie(
+                country_profit,
+                names='country',
+                values='netsalesamount',
+                title='Распределение прибыли по странам',
+                hole=0.3
+            )
+            st.plotly_chart(fig_run3, use_container_width=True)
 
 except Exception as e:
-    st.error(f"Произошла ошибка при анализе категории 'Пляжная одежда': {str(e)}")
-    st.write("Доступные столбцы в beachwear_data:", list(beachwear_data.columns))
+    st.error(f"Произошла ошибка при анализе товара: {str(e)}")
+    st.write("Проверьте наличие столбцов в данных:", list(fact_with_full_info.columns))
+
+# [Остальной код приложения остается без изменений]
