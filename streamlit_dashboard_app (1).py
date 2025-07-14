@@ -190,18 +190,13 @@ fig_pie = px.pie(manager_percent,
                 title=f"Распределение продаж менеджеров за {selected_year} год")
 st.plotly_chart(fig_pie)
 
-# ... [предыдущий код остается без изменений до раздела анализа менеджеров] ...
-
-# Анализ менеджеров (включая 2020 год)
-st.subheader("Анализ продаж менеджеров (включая 2020 год)")
-
-# Новый анализ: зависимость объема продаж от скидок
+# Новый анализ: зависимость объема продаж от среднего размера скидки
 st.subheader("Зависимость объема продаж от среднего размера скидки")
 
 # Группируем данные по менеджерам
 manager_stats = fact_with_employeename.groupby('employeename').agg(
     total_sales=('grosssalesamount', 'sum'),
-    avg_discount=('discountpercent', 'mean'),
+    avg_discount=('discount', 'mean'),
     order_count=('orderid', 'nunique')
 ).reset_index()
 
@@ -275,16 +270,3 @@ fig_discount_analysis.update_layout(
 )
 
 st.plotly_chart(fig_discount_analysis)
-
-# График продаж по менеджерам по годам
-manager_sales = fact_with_employeename.groupby(['employeename', 'year'])['grosssalesamount'].sum().reset_index()
-fig_manager = px.bar(manager_sales,
-                    x='year',
-                    y='grosssalesamount',
-                    color='employeename',
-                    barmode='group',
-                    title="Продажи по менеджерам по годам")
-fig_manager.update_layout(height=500, width=900)
-st.plotly_chart(fig_manager)
-
-# ... [остальной код остается без изменений] ...
