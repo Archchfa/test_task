@@ -27,8 +27,6 @@ filtered_data_us = fact_with_full_info[
     (fact_with_full_info['categoryname'] == 'Женская обувь') & 
     (fact_with_full_info['country'] == 'Соединённые Штаты Америки')
 ]
-st.write(fact_with_full_info.columns)
-
 
 # Агрегируем прибыль по заказчикам для США
 profit_by_customer_us = filtered_data_us.groupby('name')['netsalesamount'].sum().reset_index()
