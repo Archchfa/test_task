@@ -188,8 +188,7 @@ with col3:
     fig3.update_xaxes(tickangle=45)
 
     # Отображаем график
-    st.plo
-tly_chart(fig3)
+    st.plotly_chart(fig3)
 
 # График 4: Столбчатая диаграмма с прибыльностью по заказчикам для Бразилии (только 80% прибыли)
 with col4:
