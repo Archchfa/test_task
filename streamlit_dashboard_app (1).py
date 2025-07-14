@@ -252,3 +252,32 @@ profit_growth_table = profit_growth_table.fillna(0)
 
 # Отображаем таблицу
 st.write(profit_growth_table)
+
+
+# Новый график: Найдем заказчиков с увеличением grosssalesamount в 2019 по сравнению с 2018
+st.subheader("Прирост по заказчикам в 2019 году по сравнению с 2018")
+
+# Фильтруем данные по 2018 и 2019 годам
+filtered_data_2018_2019 = fact_with_full_info[(fact_with_full_info['year'] == 2018) | (fact_with_full_info['year'] == 2019)]
+
+# Агрегируем данные по заказчикам за 2018 и 2019 годы
+profit_by_customer_2018_2019 = filtered_data_2018_2019.groupby(['name', 'year'])['grosssalesamount'].sum().reset_index()
+
+# Пивотируем таблицу для удобства сравнения
+pivot_data = profit_by_customer_2018_2019.pivot(index='name', columns='year', values='grosssalesamount').reset_index()
+
+# Добавляем столбец для прироста
+pivot_data['growth_percentage'] = ((pivot_data[2019] - pivot_data[2018]) / pivot_data[2018]) * 100
+
+# Фильтруем заказчиков с приростом в 2019 году больше, чем в 2018 году
+filtered_growth = pivot_data[pivot_data['growth_percentage'] > 0]
+
+# Строим круговую диаграмму для прироста
+fig_growth = px.pie(filtered_growth, 
+                    names='name', 
+                    values='growth_percentage', 
+                    title="Прирост с 2018 по 2019 для заказчиков", 
+                    labels={'growth_percentage': 'Прирост (%)', 'name': 'Заказчик'})
+
+# Отображаем график
+st.plotly_chart(fig_growth)
