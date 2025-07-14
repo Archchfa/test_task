@@ -196,7 +196,7 @@ st.subheader("Зависимость объема продаж от средне
 # Группируем данные по менеджерам
 manager_stats = fact_with_employeename.groupby('employeename').agg(
     total_sales=('grosssalesamount', 'sum'),
-    avg_discount=('discount', 'mean'),
+    avg_discount=('discount', 'mean'),  # Используем столбец 'discount'
     order_count=('orderid', 'nunique')
 ).reset_index()
 
