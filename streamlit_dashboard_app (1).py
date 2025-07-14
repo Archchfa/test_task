@@ -197,3 +197,122 @@ st.plotly_chart(fig_weekday)
 
 top_day = sales_by_weekday.loc[sales_by_weekday['grosssalesamount'].idxmax()]
 st.write(f"Наиболее продуктивный день недели: **{top_day['weekday_name']}** (объем продаж: {top_day['grosssalesamount']:,.0f})")
+
+
+# [Весь предыдущий код остается без изменений до этого места]
+
+# 7. Анализ товаров категории "Пляжная одежда"
+st.subheader("Анализ товаров категории «Пляжная одежда»")
+
+# Фильтруем данные по категории "Пляжная одежда"
+beachwear_data = fact_with_full_info[fact_with_full_info['categoryname'] == 'Пляжная одежда']
+
+# Добавляем названия товаров
+beachwear_data = pd.merge(beachwear_data, products[['productid', 'productname']], on='productid', how='left')
+
+# Группируем данные по товарам
+product_stats = beachwear_data.groupby('productname').agg(
+    sales_count=('orderid', 'count'),
+    total_profit=('netsalesamount', 'sum'),
+    avg_price=('unitprice', 'mean')
+).reset_index().sort_values('total_profit', ascending=False)
+
+# Топ-10 самых прибыльных товаров
+st.markdown("**Топ-10 самых прибыльных товаров**")
+col_beach1, col_beach2 = st.columns(2)
+
+with col_beach1:
+    fig_beach1 = px.bar(
+        product_stats.head(10),
+        x='productname',
+        y='total_profit',
+        title='Общая прибыль по товарам',
+        labels={'productname': 'Название товара', 'total_profit': 'Прибыль'},
+        color='total_profit'
+    )
+    st.plotly_chart(fig_beach1, use_container_width=True)
+
+with col_beach2:
+    fig_beach2 = px.pie(
+        product_stats.head(10),
+        names='productname',
+        values='total_profit',
+        title='Доля в общей прибыли',
+        hole=0.3
+    )
+    st.plotly_chart(fig_beach2, use_container_width=True)
+
+# Топ-10 самых продаваемых товаров
+st.markdown("**Топ-10 самых продаваемых товаров**")
+col_beach3, col_beach4 = st.columns(2)
+
+with col_beach3:
+    fig_beach3 = px.bar(
+        product_stats.sort_values('sales_count', ascending=False).head(10),
+        x='productname',
+        y='sales_count',
+        title='Количество продаж',
+        labels={'productname': 'Название товара', 'sales_count': 'Количество продаж'},
+        color='sales_count'
+    )
+    st.plotly_chart(fig_beach3, use_container_width=True)
+
+with col_beach4:
+    fig_beach4 = px.scatter(
+        product_stats.head(20),
+        x='sales_count',
+        y='total_profit',
+        size='avg_price',
+        color='productname',
+        title='Соотношение продаж и прибыли',
+        labels={
+            'sales_count': 'Количество продаж',
+            'total_profit': 'Общая прибыль',
+            'avg_price': 'Средняя цена'
+        },
+        hover_name='productname'
+    )
+    st.plotly_chart(fig_beach4, use_container_width=True)
+
+# Анализ по странам для пляжной одежды
+st.markdown("**Распределение продаж по странам**")
+country_stats_beach = beachwear_data.groupby('country').agg(
+    total_profit=('netsalesamount', 'sum'),
+    sales_count=('orderid', 'count')
+).reset_index()
+
+fig_beach5 = px.bar(
+    country_stats_beach.sort_values('total_profit', ascending=False),
+    x='country',
+    y='total_profit',
+    title='Прибыль от пляжной одежды по странам',
+    labels={'country': 'Страна', 'total_profit': 'Прибыль'},
+    color='total_profit'
+)
+st.plotly_chart(fig_beach5, use_container_width=True)
+
+# Выводы по пляжной одежде
+st.markdown("**Ключевые выводы**")
+top_product = product_stats.iloc[0]
+st.write(f"""
+1. **Самый прибыльный товар**: {top_product['productname']}
+   - Общая прибыль: {top_product['total_profit']:,.0f}
+   - Количество продаж: {top_product['sales_count']}
+   - Средняя цена: {top_product['avg_price']:,.2f}
+
+2. **Топ-3 товара по прибыльности**:
+   - {product_stats.iloc[0]['productname']} ({product_stats.iloc[0]['total_profit']:,.0f})
+   - {product_stats.iloc[1]['productname']} ({product_stats.iloc[1]['total_profit']:,.0f})
+   - {product_stats.iloc[2]['productname']} ({product_stats.iloc[2]['total_profit']:,.0f})
+
+3. **Самые популярные товары** (по количеству продаж):
+   - {product_stats.sort_values('sales_count', ascending=False).iloc[0]['productname']} ({product_stats.sort_values('sales_count', ascending=False).iloc[0]['sales_count']} продаж)
+   - {product_stats.sort_values('sales_count', ascending=False).iloc[1]['productname']} ({product_stats.sort_values('sales_count', ascending=False).iloc[1]['sales_count']} продаж)
+   - {product_stats.sort_values('sales_count', ascending=False).iloc[2]['productname']} ({product_stats.sort_values('sales_count', ascending=False).iloc[2]['sales_count']} продаж)
+
+4. **Лучшие рынки сбыта**:
+   - {country_stats_beach.sort_values('total_profit', ascending=False).iloc[0]['country']} ({country_stats_beach.sort_values('total_profit', ascending=False).iloc[0]['total_profit']:,.0f})
+   - {country_stats_beach.sort_values('total_profit', ascending=False).iloc[1]['country']} ({country_stats_beach.sort_values('total_profit', ascending=False).iloc[1]['total_profit']:,.0f})
+""")
+
+# [Остальной код остается без изменений]
