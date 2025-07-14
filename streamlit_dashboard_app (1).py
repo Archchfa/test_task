@@ -254,13 +254,13 @@ profit_growth_table = profit_growth_table.fillna(0)
 st.write(profit_growth_table)
 
 
-# Новый график: Найдем страны с увеличением grosssalesamount в 2019 по сравнению с 2018
-st.subheader("Прирост по странам в 2019 году по сравнению с 2018")
+# Дополнение: График прироста по странам
+st.subheader("Прирост по странам с 2018 по 2019")
 
-# Фильтруем данные по 2018 и 2019 годам
+# Фильтруем данные для 2018 и 2019 года
 filtered_data_2018_2019 = fact_with_full_info[(fact_with_full_info['year'] == 2018) | (fact_with_full_info['year'] == 2019)]
 
-# Агрегируем данные по странам за 2018 и 2019 годы
+# Группируем данные по странам и годам
 profit_by_country_2018_2019 = filtered_data_2018_2019.groupby(['country', 'year'])['grosssalesamount'].sum().reset_index()
 
 # Пивотируем таблицу для удобства сравнения
@@ -272,7 +272,7 @@ pivot_data['growth_percentage'] = ((pivot_data[2019] - pivot_data[2018]) / pivot
 # Фильтруем страны с приростом в 2019 году больше, чем в 2018 году
 filtered_growth = pivot_data[pivot_data['growth_percentage'] > 0]
 
-# Строим круговую диаграмму для прироста
+# Строим круговую диаграмму для прироста с 2018 по 2019 для стран
 fig_growth = px.pie(filtered_growth, 
                     names='country', 
                     values='growth_percentage', 
